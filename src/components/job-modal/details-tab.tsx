@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Plus, GripVertical, Trash2, Search, MapPin, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,8 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import { mockClients } from '@/lib/mock-data';
 import { JOB_STATUSES, JOB_CATEGORIES } from '@/lib/constants';
+import { jobService } from '@/lib/supabase/service';
+import { toast } from 'sonner';
+import type { Client } from '@/lib/types';
 
 interface ChecklistItemType {
   id: string;
@@ -17,7 +19,13 @@ interface ChecklistItemType {
   completed: boolean;
 }
 
-export function DetailsTab() {
+interface DetailsTabProps {
+  jobId?: string;
+  onSuccess?: () => void;
+}
+
+export function DetailsTab({ jobId, onSuccess }: DetailsTabProps) {
+  const [loading, setLoading] = useState(false);
   const [clientSearch, setClientSearch] = useState('');
   const [showClientDropdown, setShowClientDropdown] = useState(false);
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
@@ -26,13 +34,30 @@ export function DetailsTab() {
   const [poNumber, setPoNumber] = useState('');
   const [address, setAddress] = useState('');
   const [description, setDescription] = useState('');
+  const [contactName, setContactName] = useState('');
+  const [contactEmail, setContactEmail] = useState('');
+  const [contactPhone, setContactPhone] = useState('');
+  const [contactMobile, setContactMobile] = useState('');
   const [checklist, setChecklist] = useState<ChecklistItemType[]>([
     { id: '1', text: 'Confirm site access requirements', completed: false },
     { id: '2', text: 'Verify roof condition and measurements', completed: false },
   ]);
   const [billingSameAsJob, setBillingSameAsJob] = useState(true);
+  const [clients, setClients] = useState<Client[]>([]);
 
-  const filteredClients = mockClients.filter(c => {
+  useEffect(() => {
+    async function loadClients() {
+      try {
+        const data = await jobService.fetchClients();
+        setClients(data);
+      } catch (error) {
+        console.error('Failed to load clients:', error);
+      }
+    }
+    loadClients();
+  }, []);
+
+  const filteredClients = clients.filter(c => {
     if (!clientSearch) return true;
     const q = clientSearch.toLowerCase();
     return (
@@ -66,7 +91,7 @@ export function DetailsTab() {
   };
 
   const selectedClientData = selectedClient
-    ? mockClients.find(c => c.id === selectedClient)
+    ? clients.find(c => c.id === selectedClient)
     : null;
 
   return (
@@ -247,10 +272,30 @@ export function DetailsTab() {
       <div className="space-y-4">
         <label className="text-sm font-medium text-charcoal">Job Contact</label>
         <div className="grid grid-cols-2 gap-3">
-          <Input placeholder="Name" className="h-9 text-sm bg-off-white border-light-gray" />
-          <Input placeholder="Email" className="h-9 text-sm bg-off-white border-light-gray" />
-          <Input placeholder="Phone" className="h-9 text-sm bg-off-white border-light-gray" />
-          <Input placeholder="Mobile" className="h-9 text-sm bg-off-white border-light-gray" />
+          <Input 
+            placeholder="Name" 
+            className="h-9 text-sm bg-off-white border-light-gray" 
+            value={contactName}
+            onChange={(e) => setContactName(e.target.value)}
+          />
+          <Input 
+            placeholder="Email" 
+            className="h-9 text-sm bg-off-white border-light-gray" 
+            value={contactEmail}
+            onChange={(e) => setContactEmail(e.target.value)}
+          />
+          <Input 
+            placeholder="Phone" 
+            className="h-9 text-sm bg-off-white border-light-gray" 
+            value={contactPhone}
+            onChange={(e) => setContactPhone(e.target.value)}
+          />
+          <Input 
+            placeholder="Mobile" 
+            className="h-9 text-sm bg-off-white border-light-gray" 
+            value={contactMobile}
+            onChange={(e) => setContactMobile(e.target.value)}
+          />
         </div>
 
         <div className="flex items-center gap-2">
@@ -268,8 +313,70 @@ export function DetailsTab() {
 
       {/* Save button */}
       <div className="pt-2 pb-4">
-        <Button className="w-full bg-vision-green hover:bg-green-light text-white h-10 font-semibold shadow-md shadow-vision-green/20">
-          Save Job
+        <Button 
+          onClick={async () => {
+            try {
+              setLoading(true);
+              let clientId = selectedClient;
+
+              // If no client selected but name/email provided, create a new one
+              if (!clientId && contactName) {
+                const names = contactName.split(' ');
+                const newClient = await jobService.createClient({
+                  first_name: names[0] || 'Unknown',
+                  last_name: names.slice(1).join(' ') || 'Client',
+                  email: contactEmail || `${contactName.toLowerCase().replace(' ', '.')}@example.com`,
+                  phone: contactPhone,
+                  mobile: contactMobile,
+                  address: address
+                });
+                clientId = newClient.id;
+              }
+
+              if (!clientId) {
+                toast.error('Please select or create a client');
+                return;
+              }
+
+              const jobData = {
+                client_id: clientId,
+                address,
+                status: status as any,
+                category: category as any,
+                description,
+                po_number: poNumber,
+                contact_name: contactName,
+                contact_email: contactEmail,
+                contact_phone: contactPhone,
+                billing_same_as_job: billingSameAsJob
+              };
+
+              let savedJob;
+              if (jobId) {
+                savedJob = await jobService.updateJob(jobId, jobData);
+              } else {
+                savedJob = await jobService.createJob(jobData);
+              }
+
+              // Save checklist
+              await jobService.saveChecklist(savedJob.id, checklist.map(item => ({
+                text: item.text,
+                completed: item.completed
+              })));
+
+              toast.success(jobId ? 'Job updated' : 'Job created');
+              onSuccess?.();
+            } catch (error) {
+              console.error('Failed to save job:', error);
+              toast.error('Failed to save job');
+            } finally {
+              setLoading(false);
+            }
+          }}
+          disabled={loading}
+          className="w-full bg-vision-green hover:bg-green-light text-white h-10 font-semibold shadow-md shadow-vision-green/20"
+        >
+          {loading ? 'Saving...' : 'Save Job'}
         </Button>
       </div>
     </div>

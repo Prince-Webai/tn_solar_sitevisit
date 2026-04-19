@@ -1,13 +1,31 @@
-'use client';
-
-import { mockJobs } from '@/lib/mock-data';
+import { useState, useEffect } from 'react';
+import { jobService } from '@/lib/supabase/service';
+import type { Job } from '@/lib/types';
 
 interface TasksViewProps {
   onJobClick: (jobId: string) => void;
+  refreshKey?: number;
 }
 
-export function TasksView({ onJobClick }: TasksViewProps) {
-  const jobsWithTasks = mockJobs.filter(j =>
+export function TasksView({ onJobClick, refreshKey }: TasksViewProps) {
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadJobs() {
+      try {
+        const data = await jobService.fetchJobs();
+        setJobs(data);
+      } catch (error) {
+        console.error('Failed to load tasks:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadJobs();
+  }, [refreshKey]);
+
+  const jobsWithTasks = jobs.filter(j =>
     !['Completed', 'Cancelled', 'Archived'].includes(j.status)
   );
 

@@ -7,6 +7,7 @@ import { Eye, EyeOff, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { createClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -32,15 +33,22 @@ export default function LoginPage() {
 
     setLoading(true);
 
-    // Mock login — accepts any credentials for development
-    // Replace with Supabase auth when configured
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      const supabase = createClient();
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      // In production: const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (authError) {
+        setError(authError.message || 'Invalid email or password. Please try again.');
+        return;
+      }
+
       router.push('/dashboard');
+      router.refresh();
     } catch {
-      setError('Invalid email or password. Please try again.');
+      setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }

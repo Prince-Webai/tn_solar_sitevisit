@@ -119,53 +119,66 @@ export function Header() {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-light-gray flex items-center px-6 gap-4 shrink-0">
-      {/* Search Bar */}
-      <div className="relative flex-1 max-w-xl">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-mid-gray" />
-        <Input
-          ref={inputRef}
-          id="global-search"
-          type="text"
-          placeholder="Search jobs, clients, addresses..."
-          value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
-            setShowDropdown(true);
-          }}
-          onFocus={() => setShowDropdown(true)}
-          className="pl-10 pr-8 h-10 bg-off-white border-light-gray focus:border-vision-green focus:ring-vision-green/20"
-        />
-        {query && (
-          <button
-            onClick={() => { setQuery(''); setResults([]); }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-mid-gray hover:text-charcoal transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
+    <header className="h-16 bg-white border-b border-light-gray flex items-center justify-between px-6 shrink-0 z-40 relative">
+      
+      {/* Left Area: Placeholder to keep center centered */}
+      <div className="hidden md:block min-w-[200px]"></div>
 
-        {/* Dropdown */}
+      {/* Center Area: Prominent Wide Search */}
+      <div className="relative flex-1 max-w-2xl mx-8">
+        <div className="relative w-full group">
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+            <Search className="h-4 w-4 text-mid-gray group-focus-within:text-vision-green transition-colors" />
+          </div>
+          <Input
+            ref={inputRef}
+            id="global-search"
+            type="text"
+            placeholder="Search jobs, clients, technicians..."
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setShowDropdown(true);
+            }}
+            onFocus={() => setShowDropdown(true)}
+            className="block w-full pl-10 pr-10 h-10 bg-off-white border border-light-gray/80 rounded-lg text-sm transition-all focus:bg-white focus:border-vision-green/50 focus:ring-4 focus:ring-vision-green/10 focus:shadow-sm hover:border-gray-300"
+          />
+          {query && (
+            <button
+              onClick={() => { setQuery(''); setResults([]); }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-mid-gray hover:text-charcoal transition-colors bg-light-gray/20 hover:bg-light-gray/50 rounded-md p-1"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
+
+        {/* Search Results Dropdown */}
         {showDropdown && (query || recentSearches.length > 0) && (
           <div
             ref={dropdownRef}
-            className="absolute top-full left-0 right-0 mt-1 bg-white border border-light-gray rounded-lg shadow-lg overflow-hidden z-50 animate-fade-in"
+            className="absolute top-[calc(100%+6px)] left-0 right-0 bg-white border border-light-gray rounded-lg shadow-xl overflow-hidden z-50 animate-fade-in"
           >
             {/* Results */}
             {results.length > 0 && (
-              <div className="p-1">
-                {results.map(r => (
+              <div className="py-2">
+                <div className="px-4 pb-1 pt-1 border-b border-light-gray/50 mb-1">
+                  <p className="text-[10px] font-bold text-mid-gray tracking-widest uppercase">Matching Results</p>
+                </div>
+                {results.map((r, i) => (
                   <button
                     key={r.id}
                     onClick={() => handleSelect(r)}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-off-white transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-4 py-2 hover:bg-off-white transition-colors text-left"
                   >
-                    {iconForType(r.type)}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-charcoal truncate">{r.title}</p>
-                      <p className="text-xs text-mid-gray truncate">{r.subtitle}</p>
+                    <div className="w-7 h-7 rounded border border-light-gray/50 bg-white flex items-center justify-center shrink-0">
+                      {iconForType(r.type)}
                     </div>
-                    <span className="text-[10px] uppercase tracking-wider text-mid-gray font-medium px-1.5 py-0.5 bg-off-white rounded">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-charcoal truncate">{r.title}</p>
+                      <p className="text-xs text-mid-gray truncate leading-tight">{r.subtitle}</p>
+                    </div>
+                    <span className="text-[10px] uppercase tracking-wider text-mid-gray font-medium bg-off-white px-2 py-0.5 rounded border border-light-gray/50">
                       {r.type}
                     </span>
                   </button>
@@ -175,25 +188,26 @@ export function Header() {
 
             {/* No results */}
             {query && results.length === 0 && (
-              <div className="px-4 py-6 text-center">
-                <p className="text-sm text-mid-gray">No results found for &ldquo;{query}&rdquo;</p>
+              <div className="py-8 text-center">
+                <Search className="w-6 h-6 text-light-gray mx-auto mb-2" />
+                <p className="text-sm text-dark-gray font-medium">No results found</p>
               </div>
             )}
 
             {/* Recent searches */}
             {!query && recentSearches.length > 0 && (
-              <div className="p-1">
-                <p className="px-3 py-1.5 text-xs font-medium text-mid-gray uppercase tracking-wider">
-                  Recent Searches
-                </p>
+              <div className="py-2">
+                <div className="px-4 pb-1 pt-1 border-b border-light-gray/50 mb-1">
+                  <p className="text-[10px] font-bold text-mid-gray tracking-widest uppercase">Recent Searches</p>
+                </div>
                 {recentSearches.map((s, i) => (
                   <button
                     key={i}
                     onClick={() => { setQuery(s); setShowDropdown(true); }}
-                    className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-off-white transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-4 py-2 hover:bg-off-white transition-colors text-left group"
                   >
-                    <Clock className="w-4 h-4 text-mid-gray" />
-                    <span className="text-sm text-dark-gray">{s}</span>
+                    <Clock className="w-3.5 h-3.5 text-mid-gray/50 group-hover:text-vision-green transition-colors" />
+                    <span className="text-sm text-dark-gray font-medium group-hover:text-charcoal transition-colors">{s}</span>
                   </button>
                 ))}
               </div>
@@ -202,11 +216,29 @@ export function Header() {
         )}
       </div>
 
-      {/* Right side placeholder for notifications etc */}
-      <div className="flex items-center gap-2">
-        <div className="h-8 px-3 flex items-center rounded-full bg-accent text-green-dark text-xs font-semibold">
-          {new Date().toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+      {/* Right Area: Status & Tools */}
+      <div className="flex items-center gap-4 min-w-[200px] justify-end">
+        
+        {/* Date Display */}
+        <div className="flex flex-col items-end mr-2">
+          <p className="text-[10px] font-bold text-mid-gray tracking-widest uppercase">
+            {new Date().toLocaleDateString('en-AU', { weekday: 'long' })}
+          </p>
+          <p className="text-sm font-semibold text-charcoal">
+            {new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
+          </p>
         </div>
+
+        <div className="w-px h-8 bg-light-gray/70"></div>
+
+        {/* Notifications */}
+        <button className="relative w-10 h-10 flex items-center justify-center rounded-lg text-mid-gray hover:bg-off-white hover:text-charcoal transition-all group border border-transparent hover:border-light-gray/50">
+          <svg className="w-5 h-5 group-hover:animate-wiggle" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+          <span className="absolute top-2 right-2.5 w-2 h-2 bg-solar-orange rounded-full border border-white"></span>
+        </button>
+
       </div>
     </header>
   );

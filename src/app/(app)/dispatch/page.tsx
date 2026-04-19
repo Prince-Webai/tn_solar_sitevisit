@@ -34,9 +34,14 @@ const QUEUE_ACTIONS = [
 ];
 
 export default function DispatchPage() {
-  const [activeTab, setActiveTab] = useState<TabId>('map');
+  const [activeTab, setActiveTab] = useState<TabId>('schedules');
   const [jobModalOpen, setJobModalOpen] = useState(false);
   const [selectedJobId, setSelectedJobId] = useState<string | undefined>();
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   const staffMembers = mockProfiles.filter(p => p.role === 'Technician' || p.role === 'Dispatcher');
 
@@ -136,19 +141,24 @@ export default function DispatchPage() {
         <div className="flex flex-1 min-h-0 overflow-hidden">
           {/* Left: Tab Content */}
           <div className="flex-1 min-w-0 overflow-auto">
-            {activeTab === 'map' && <DispatchMap onNewJob={() => { setSelectedJobId(undefined); setJobModalOpen(true); }} />}
-            {activeTab === 'tasks' && <TasksView onJobClick={handleJobDoubleClick} />}
-            {activeTab === 'calendar' && <CalendarView />}
-            {activeTab === 'schedules' && <StaffScheduleView onJobClick={handleJobDoubleClick} />}
-            {activeTab === 'queues' && <QueuesView onJobClick={handleJobDoubleClick} />}
+            {activeTab === 'map' && <DispatchMap refreshKey={refreshKey} onNewJob={() => { setSelectedJobId(undefined); setJobModalOpen(true); }} />}
+            {activeTab === 'tasks' && <TasksView refreshKey={refreshKey} onJobClick={handleJobDoubleClick} />}
+            {activeTab === 'calendar' && <CalendarView refreshKey={refreshKey} />}
+            {activeTab === 'schedules' && <StaffScheduleView refreshKey={refreshKey} onJobClick={handleJobDoubleClick} />}
+            {activeTab === 'queues' && <QueuesView refreshKey={refreshKey} onJobClick={handleJobDoubleClick} />}
           </div>
 
           {/* Right: Jobs Panel (always visible) */}
-          <JobsPanel onJobDoubleClick={handleJobDoubleClick} />
+          <JobsPanel onJobDoubleClick={handleJobDoubleClick} refreshKey={refreshKey} />
         </div>
       </div>
 
-      <JobModal open={jobModalOpen} onOpenChange={setJobModalOpen} jobId={selectedJobId} />
+      <JobModal 
+        open={jobModalOpen} 
+        onOpenChange={setJobModalOpen} 
+        jobId={selectedJobId} 
+        onSuccess={handleRefresh}
+      />
     </>
   );
 }

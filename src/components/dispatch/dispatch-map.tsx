@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { GoogleMap, useLoadScript, MarkerF, InfoWindowF } from '@react-google-maps/api';
 import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { mockStaffLocations, mockJobs } from '@/lib/mock-data';
+import { jobService } from '@/lib/supabase/service';
 import { MELBOURNE_COORDS } from '@/lib/constants';
+import type { Job, StaffLocation } from '@/lib/types';
 
 const mapContainerStyle = {
   width: '100%',
@@ -33,13 +34,31 @@ const createJobIcon = () => `data:image/svg+xml;charset=UTF-8,${encodeURICompone
 </svg>
 `)}`;
 
-export function DispatchMap({ onNewJob }: { onNewJob: () => void }) {
+export function DispatchMap({ onNewJob, refreshKey }: { onNewJob: () => void; refreshKey?: number }) {
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
   });
 
-  const [selectedStaff, setSelectedStaff] = useState<typeof mockStaffLocations[0] | null>(null);
-  const [selectedJob, setSelectedJob] = useState<typeof mockJobs[0] | null>(null);
+  const [staffLocations, setStaffLocations] = useState<StaffLocation[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [selectedStaff, setSelectedStaff] = useState<StaffLocation | null>(null);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [jobsData, staffData] = await Promise.all([
+          jobService.fetchJobs(),
+          jobService.fetchStaffLocations()
+        ]);
+        setJobs(jobsData);
+        setStaffLocations(staffData as StaffLocation[]);
+      } catch (error) {
+        console.error('Failed to load map data:', error);
+      }
+    }
+    if (isLoaded) loadData();
+  }, [isLoaded, refreshKey]);
 
   if (loadError) {
     return (
@@ -65,7 +84,7 @@ export function DispatchMap({ onNewJob }: { onNewJob: () => void }) {
     { lat: 0.03, lng: 0.02 },
   ];
 
-  const jobsToDisplay = mockJobs.filter(j => j.status === 'Work Order' && j.scheduled_date);
+  const jobsToDisplay = jobs.filter(j => j.status === 'Work Order' && j.scheduled_date);
 
   return (
     <div className="flex-1 relative h-full min-w-0">
@@ -90,10 +109,10 @@ export function DispatchMap({ onNewJob }: { onNewJob: () => void }) {
           }}
         >
           {/* Staff Markers */}
-          {mockStaffLocations.map((loc) => (
+          {staffLocations.map((loc) => (
             <MarkerF
               key={loc.id}
-              position={{ lat: loc.latitude, lng: loc.longitude }}
+              position={{ lat: Number(loc.latitude), lng: Number(loc.longitude) }}
               icon={{
                 url: createStaffIcon(),
                 scaledSize: new window.google.maps.Size(40, 40),
@@ -162,16 +181,6 @@ export function DispatchMap({ onNewJob }: { onNewJob: () => void }) {
         </GoogleMap>
       </div>
 
-      {/* New Job FAB */}
-      <div className="absolute top-4 left-4 z-[10]">
-        <Button
-          onClick={onNewJob}
-          className="bg-solar-orange hover:bg-orange-light text-white shadow-lg shadow-solar-orange/30 hover:shadow-xl hover:shadow-solar-orange/40 transition-all duration-200 gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          New Job
-        </Button>
-      </div>
 
       {/* Map legend */}
       <div className="absolute bottom-6 left-4 z-[10] bg-white/90 backdrop-blur-sm rounded-lg border border-light-gray p-3 shadow-sm">

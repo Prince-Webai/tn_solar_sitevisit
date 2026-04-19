@@ -1,9 +1,8 @@
-'use client';
-
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { mockProfiles, mockJobs } from '@/lib/mock-data';
+import { mockProfiles } from '@/lib/mock-data';
+import { jobService } from '@/lib/supabase/service';
 import type { Job } from '@/lib/types';
 
 const TIME_SLOTS = [
@@ -23,13 +22,30 @@ interface ScheduledBlock {
 
 interface StaffScheduleViewProps {
   onJobClick: (jobId: string) => void;
+  refreshKey?: number;
 }
 
-export function StaffScheduleView({ onJobClick }: StaffScheduleViewProps) {
+export function StaffScheduleView({ onJobClick, refreshKey }: StaffScheduleViewProps) {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [view, setView] = useState<string>('Day');
   const [scheduledBlocks, setScheduledBlocks] = useState<ScheduledBlock[]>([]);
   const [dragOverCell, setDragOverCell] = useState<{ staffId: string; slotIndex: number } | null>(null);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await jobService.fetchJobs();
+        setJobs(data);
+      } catch (error) {
+        console.error('Failed to load schedule data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, [refreshKey]);
 
   const staffMembers = mockProfiles.filter(p => p.role === 'Technician' || p.role === 'Dispatcher');
 
@@ -62,7 +78,7 @@ export function StaffScheduleView({ onJobClick }: StaffScheduleViewProps) {
     if (!jobId) return;
 
     // Find the job to determine duration
-    const job = mockJobs.find(j => j.id === jobId);
+    const job = jobs.find(j => j.id === jobId);
     const duration = job?.estimated_hours ? Math.ceil(job.estimated_hours) : 2;
 
     // Remove any existing block for this job
@@ -176,7 +192,7 @@ export function StaffScheduleView({ onJobClick }: StaffScheduleViewProps) {
                   }
 
                   if (block) {
-                    const job = mockJobs.find(j => j.id === block.jobId);
+                    const job = jobs.find(j => j.id === block.jobId);
                     const isQuote = job && ['Quote', 'Quote Sent', 'Lead'].includes(job.status);
                     return (
                       <td

@@ -1,36 +1,60 @@
+import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Public routes that don't require auth
-  const publicRoutes = ['/login', '/api'];
+  let supabaseResponse = NextResponse.next({ request });
 
-  if (publicRoutes.some(route => pathname.startsWith(route))) {
-    return NextResponse.next();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  // Refresh session — important, do not remove
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // Public routes that don't require authentication
+  const publicRoutes = ['/login', '/api'];
+  const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
+
+  // Redirect root to dashboard
+  if (pathname === '/') {
+    if (!user) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // For now, during development without Supabase credentials,
-  // allow all access. In production, this would check the session.
-  // Uncomment the following block when Supabase is configured:
-
-  /*
-  const supabase = createMiddlewareClient(request);
-  const { data: { session } } = await supabase.auth.getSession();
-
-  if (!session && !publicRoutes.some(route => pathname.startsWith(route))) {
+  // If not logged in and trying to access a protected route → go to login
+  if (!user && !isPublicRoute) {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);
   }
-  */
 
-  // Redirect root to dashboard
-  if (pathname === '/') {
+  // If already logged in and trying to access the login page → go to dashboard
+  if (user && pathname.startsWith('/login')) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  return NextResponse.next();
+  return supabaseResponse;
 }
 
 export const config = {

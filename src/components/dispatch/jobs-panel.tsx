@@ -1,15 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, X, GripVertical, MapPin, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { mockJobs } from '@/lib/mock-data';
+import { jobService } from '@/lib/supabase/service';
 import type { Job } from '@/lib/types';
 
 interface JobsPanelProps {
   onJobDoubleClick: (jobId: string) => void;
+  refreshKey?: number;
 }
 
 function JobCard({ job, onDoubleClick }: { job: Job; onDoubleClick: () => void }) {
@@ -74,11 +75,27 @@ function JobCard({ job, onDoubleClick }: { job: Job; onDoubleClick: () => void }
   );
 }
 
-export function JobsPanel({ onJobDoubleClick }: JobsPanelProps) {
+export function JobsPanel({ onJobDoubleClick, refreshKey }: JobsPanelProps) {
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('All Jobs');
 
-  const filteredJobs = mockJobs.filter(j => {
+  useEffect(() => {
+    async function loadJobs() {
+      try {
+        const data = await jobService.fetchJobs();
+        setJobs(data);
+      } catch (error) {
+        console.error('Failed to load jobs');
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadJobs();
+  }, [refreshKey]);
+
+  const filteredJobs = jobs.filter(j => {
     // Status filter
     if (filter === 'Quotes' && !['Quote', 'Quote Sent', 'Lead'].includes(j.status)) return false;
     if (filter === 'Work Orders' && j.status !== 'Work Order') return false;

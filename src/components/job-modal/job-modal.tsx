@@ -20,9 +20,10 @@ interface JobModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   jobId?: string;
+  onSuccess?: () => void;
 }
 
-export function JobModal({ open, onOpenChange, jobId }: JobModalProps) {
+export function JobModal({ open, onOpenChange, jobId, onSuccess }: JobModalProps) {
   const [activeTab, setActiveTab] = useState<TabId>('details');
   const isEditing = !!jobId;
 
@@ -81,9 +82,13 @@ export function JobModal({ open, onOpenChange, jobId }: JobModalProps) {
           ))}
         </div>
 
-        {/* Tab Content */}
         <div className="flex-1 overflow-y-auto">
-          {activeTab === 'details' && <DetailsTab />}
+          {activeTab === 'details' && (
+            <DetailsTab jobId={jobId} onSuccess={() => {
+              onSuccess?.();
+              onOpenChange(false);
+            }} />
+          )}
           {activeTab === 'billing' && <BillingTab />}
           {activeTab === 'saved' && <SavedTab />}
         </div>
