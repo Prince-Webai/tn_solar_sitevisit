@@ -84,7 +84,7 @@ export function WeatherWidget() {
       <CardContent className="p-5">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <p className="text-xs font-medium text-mid-gray uppercase tracking-wider">Melbourne, VIC</p>
+            <p className="text-xs font-medium text-mid-gray uppercase tracking-wider">Chennai, TN</p>
             <div className="flex items-baseline gap-2 mt-1">
               <span className="text-3xl font-bold text-charcoal">{weather?.temperature}°C</span>
               <span className="text-sm text-dark-gray">{weather?.condition}</span>

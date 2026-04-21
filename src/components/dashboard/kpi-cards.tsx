@@ -48,8 +48,8 @@ export function KpiCards() {
         const todayJobs = jobs.filter(j => j.scheduled_date?.startsWith(today));
         setTodaysCount(todayJobs.length);
 
-        // Pending approvals = Quote Sent
-        setPendingCount(jobs.filter(j => j.status === 'Quote Sent').length);
+        // Pending approvals = Lead
+        setPendingCount(jobs.filter(j => j.status === 'Lead').length);
 
         // Team status from profiles
         const { data: profiles } = await supabase.from('profiles').select('status');

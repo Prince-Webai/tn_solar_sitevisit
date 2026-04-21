@@ -54,12 +54,14 @@ export function AddUserDialog({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-vision-green hover:bg-green-dark text-white gap-2 shadow-sm rounded-xl px-5 h-11">
-          <UserPlus className="w-4 h-4" />
-          Add Team Member
-        </Button>
-      </DialogTrigger>
+      <DialogTrigger
+        render={
+          <Button className="bg-vision-green hover:bg-green-dark text-white gap-2 shadow-sm rounded-xl px-5 h-11">
+            <UserPlus className="w-4 h-4" />
+            Add Team Member
+          </Button>
+        }
+      />
       <DialogContent className="sm:max-w-[480px] rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
         <div className="bg-gradient-to-br from-vision-green to-green-dark p-8 text-white relative">
           <div className="absolute top-0 right-0 p-8 opacity-10">

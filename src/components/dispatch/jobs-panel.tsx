@@ -106,7 +106,7 @@ export function JobsPanel({ onJobDoubleClick, refreshKey }: JobsPanelProps) {
   }, [refreshKey, user, profile, authLoading]);
 
   const filteredJobs = jobs.filter(j => {
-    if (filter === 'Quotes' && !['Quote', 'Quote Sent', 'Lead'].includes(j.status)) return false;
+    if (filter === 'Quotes' && j.status !== 'Lead') return false;
     if (filter === 'Work Orders' && j.status !== 'Work Order') return false;
     if (filter === 'Completed' && j.status !== 'Completed') return false;
 

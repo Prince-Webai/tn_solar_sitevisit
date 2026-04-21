@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { jobService } from '@/lib/supabase/service';
 import { useAuth } from '@/components/providers/auth-provider';
 import { DEFAULT_COORDS } from '@/lib/constants';
+import { Badge } from '@/components/ui/badge';
 import type { Job, StaffLocation } from '@/lib/types';
 
 const mapContainerStyle = {

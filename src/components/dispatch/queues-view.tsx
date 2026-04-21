@@ -62,7 +62,7 @@ export function QueuesView({ onJobClick, refreshKey }: QueuesViewProps) {
   }, [refreshKey, user, profile, authLoading]);
 
   const partsOnOrder = jobs.filter(j => j.materials_status === 'Pending' || j.materials_status === 'Ordered');
-  const pendingQuotes = jobs.filter(j => ['Quote', 'Quote Sent', 'Lead'].includes(j.status));
+  const pendingQuotes = jobs.filter(j => j.status === 'Lead');
   const workshop = jobs.filter(j => j.category === 'Service');
 
   const queues = [

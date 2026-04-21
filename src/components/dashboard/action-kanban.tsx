@@ -80,8 +80,7 @@ export function ActionKanban({ onJobClick }: ActionKanbanProps) {
 
   // Pending site assessments: status = 'Lead' and requires_site_visit = true
   const pendingAssessments = jobs.filter(j => 
-    (j.status === 'Lead' && j.requires_site_visit) || 
-    (j.status === 'Quote' && j.requires_site_visit)
+    j.status === 'Lead' && j.requires_site_visit
   );
 
   const columns = [

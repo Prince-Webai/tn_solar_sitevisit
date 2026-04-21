@@ -199,17 +199,17 @@ export default function DispatchPage() {
 
           {/* Mobile Drawer Toggle */}
           <Sheet>
-            <SheetTrigger
-              render={
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="lg:hidden fixed bottom-24 right-4 w-12 h-12 rounded-2xl shadow-xl bg-vision-green text-white border-none z-40 active:scale-95 transition-all"
-                >
-                  <Layers className="w-5 h-5" />
-                </Button>
-              }
-            />
+          <SheetTrigger
+            render={
+              <Button
+                variant="outline"
+                size="icon"
+                className="lg:hidden fixed bottom-24 right-4 w-12 h-12 rounded-2xl shadow-xl bg-vision-green text-white border-none z-40 active:scale-95 transition-all"
+              >
+                <Layers className="w-5 h-5" />
+              </Button>
+            }
+          />
             <SheetContent side="right" className="p-0 w-[300px] max-w-[85vw] border-none">
               <div className="h-full pt-10">
                 <JobsPanel onJobDoubleClick={handleJobDoubleClick} refreshKey={refreshKey} />

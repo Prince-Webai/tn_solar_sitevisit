@@ -35,7 +35,7 @@ export const mockJobs: Job[] = [
   {
     id: 'j2', job_number: 'VS-1202', client_id: 'c2', client: mockClients[1],
     address: '15 T. Nagar, Chennai TN 600017', suburb: 'T. Nagar',
-    status: 'Quote Sent', category: 'Installation',
+    status: 'Lead', category: 'Installation',
     description: '10kW commercial solar system with battery storage - SolarEdge inverter with Tesla Powerwall',
     estimated_hours: 8, system_size: '10kW', materials_status: 'Pending',
     invoice_status: 'Draft', total_value: 18500,
@@ -65,7 +65,7 @@ export const mockJobs: Job[] = [
   {
     id: 'j5', job_number: 'VS-1205', client_id: 'c5', client: mockClients[4],
     address: '7 OMR, Chennai TN 600119', suburb: 'OMR',
-    status: 'Quote', category: 'Installation',
+    status: 'Lead', category: 'Installation',
     description: '5kW residential solar system - budget-friendly option with Canadian Solar panels',
     estimated_hours: 5, system_size: '5kW', materials_status: 'Pending',
     total_value: 6200,
@@ -134,19 +134,19 @@ export const mockStaffLocations: StaffLocation[] = [
 
 // ──── Audit Logs ────
 export const mockAuditLogs: AuditLog[] = [
-  { id: 'al1', user_id: '1', user_name: 'Rahul Mandal', action: 'status_change', entity_type: 'job', entity_id: 'j1', details: 'Changed Job #VS-1201 from Quote to Work Order', created_at: '2026-04-17T09:00:00Z' },
+  { id: 'al1', user_id: '1', user_name: 'Rahul Mandal', action: 'status_change', entity_type: 'job', entity_id: 'j1', details: 'Changed Job #VS-1201 to Work Order', created_at: '2026-04-17T09:00:00Z' },
   { id: 'al2', user_id: '1', user_name: 'Rahul Mandal', action: 'assigned', entity_type: 'job', entity_id: 'j1', details: 'Assigned Job #VS-1201 to James Chen', created_at: '2026-04-17T09:05:00Z' },
-  { id: 'al3', user_id: '5', user_name: 'Lisa Nguyen', action: 'status_change', entity_type: 'job', entity_id: 'j4', details: 'Changed Job #VS-1204 from Quote Sent to Work Order', created_at: '2026-04-17T08:30:00Z' },
+  { id: 'al3', user_id: '5', user_name: 'Lisa Nguyen', action: 'status_change', entity_type: 'job', entity_id: 'j4', details: 'Changed Job #VS-1204 to Work Order', created_at: '2026-04-17T08:30:00Z' },
   { id: 'al4', user_id: '2', user_name: 'James Chen', action: 'completed', entity_type: 'job', entity_id: 'j6', details: 'Marked Job #VS-1206 as Completed', created_at: '2026-04-16T17:00:00Z' },
-  { id: 'al5', user_id: '1', user_name: 'Rahul Mandal', action: 'created', entity_type: 'job', entity_id: 'j5', details: 'Created new Quote #VS-1205 for Robert Chang', created_at: '2026-04-14T13:00:00Z' },
+  { id: 'al5', user_id: '1', user_name: 'Rahul Mandal', action: 'created', entity_type: 'job', entity_id: 'j5', details: 'Created new Lead #VS-1205 for Robert Chang', created_at: '2026-04-14T13:00:00Z' },
   { id: 'al6', user_id: '3', user_name: 'Sarah Mitchell', action: 'completed', entity_type: 'job', entity_id: 'j8', details: 'Marked Job #VS-1199 as Completed', created_at: '2026-04-12T16:00:00Z' },
-  { id: 'al7', user_id: '1', user_name: 'Rahul Mandal', action: 'quote_sent', entity_type: 'job', entity_id: 'j2', details: 'Sent Quote #VS-1202 to Emma Rodriguez', created_at: '2026-04-12T10:30:00Z' },
+  { id: 'al7', user_id: '1', user_name: 'Rahul Mandal', action: 'lead_created', entity_type: 'job', entity_id: 'j2', details: 'Created Lead #VS-1202 for Emma Rodriguez', created_at: '2026-04-12T10:30:00Z' },
 ];
 
 // ──── Saved Versions ────
 export const mockSavedVersions: SavedVersion[] = [
   { id: 'sv1', job_id: 'j1', user_name: 'Rahul Mandal', action: 'Job Created', created_at: '2026-04-10T08:00:00Z' },
-  { id: 'sv2', job_id: 'j1', user_name: 'Rahul Mandal', action: 'Quote Generated', created_at: '2026-04-10T08:30:00Z' },
+  { id: 'sv2', job_id: 'j1', user_name: 'Rahul Mandal', action: 'Lead Generated', created_at: '2026-04-10T08:30:00Z' },
   { id: 'sv3', job_id: 'j1', user_name: 'Lisa Nguyen', action: 'Status changed to Work Order', created_at: '2026-04-12T09:15:00Z' },
   { id: 'sv4', job_id: 'j1', user_name: 'Lisa Nguyen', action: 'Assigned to James Chen', created_at: '2026-04-12T09:20:00Z' },
 ];
@@ -161,13 +161,13 @@ export function getTodaysJobs(): Job[] {
 export function getUnscheduledJobs(): Job[] {
   return mockJobs.filter(j =>
     !j.scheduled_date &&
-    !['Completed', 'Cancelled', 'Archived'].includes(j.status)
+    !['Completed', 'Cancelled', 'Unsuccessful'].includes(j.status)
   );
 }
 
 // Helper to get completed jobs
 export function getCompletedJobs(): Job[] {
   return mockJobs.filter(j =>
-    ['Completed', 'Cancelled', 'Archived'].includes(j.status)
+    ['Completed', 'Cancelled', 'Unsuccessful'].includes(j.status)
   );
 }

@@ -92,8 +92,9 @@ export function TasksView({ onJobClick, refreshKey }: TasksViewProps) {
                   <div className="px-4 py-4">
                     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                       job.status === 'Work Order' ? 'bg-blue-50 text-blue-700 border border-blue-100'
-                      : job.status === 'In Progress' ? 'bg-vision-green/10 text-green-dark border border-vision-green/20'
-                      : 'bg-solar-orange/10 text-orange-dark border border-solar-orange/20'
+                      : job.status === 'Completed' ? 'bg-vision-green/10 text-green-dark border border-vision-green/20'
+                      : job.status === 'Site Visit' ? 'bg-solar-orange/10 text-orange-dark border border-solar-orange/20'
+                      : 'bg-off-white text-mid-gray border border-light-gray'
                     }`}>
                       {job.status}
                     </span>
@@ -109,8 +110,9 @@ export function TasksView({ onJobClick, refreshKey }: TasksViewProps) {
                     </div>
                     <span className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
                       job.status === 'Work Order' ? 'bg-blue-50 text-blue-700 border border-blue-100'
-                      : job.status === 'In Progress' ? 'bg-vision-green/10 text-green-dark border border-vision-green/20'
-                      : 'bg-solar-orange/10 text-orange-dark border border-solar-orange/20'
+                      : job.status === 'Completed' ? 'bg-vision-green/10 text-green-dark border border-vision-green/20'
+                      : job.status === 'Site Visit' ? 'bg-solar-orange/10 text-orange-dark border border-solar-orange/20'
+                      : 'bg-off-white text-mid-gray border border-light-gray'
                     }`}>
                       {job.status}
                     </span>
