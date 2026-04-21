@@ -4,7 +4,8 @@ import { useEffect, useState } from 'react';
 import { Calendar, Users, FileCheck, TrendingUp } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { mockJobs, mockProfiles, getTodaysJobs } from '@/lib/mock-data';
+import { jobService } from '@/lib/supabase/service';
+import { createClient } from '@/lib/supabase/client';
 
 function AnimatedCounter({ value, prefix = '' }: { value: number; prefix?: string }) {
   const [count, setCount] = useState(0);
@@ -30,24 +31,48 @@ function AnimatedCounter({ value, prefix = '' }: { value: number; prefix?: strin
 }
 
 export function KpiCards() {
-  const todaysJobs = getTodaysJobs();
-  const pendingApprovals = mockJobs.filter(j => j.status === 'Quote Sent').length;
+  const [todaysCount,    setTodaysCount]    = useState(0);
+  const [pendingCount,   setPendingCount]   = useState(0);
+  const [teamOnSite,     setTeamOnSite]     = useState(0);
+  const [teamEnRoute,    setTeamEnRoute]    = useState(0);
+  const [teamAvailable,  setTeamAvailable]  = useState(0);
+  const supabase = createClient();
 
+  useEffect(() => {
+    async function loadKpis() {
+      try {
+        const jobs = await jobService.fetchJobs();
 
-  const teamCounts = {
-    onSite: mockProfiles.filter(p => p.status === 'On Site').length,
-    enRoute: mockProfiles.filter(p => p.status === 'En Route').length,
-    available: mockProfiles.filter(p => p.status === 'Available').length,
-  };
+        // Today's scheduled jobs
+        const today = new Date().toISOString().split('T')[0];
+        const todayJobs = jobs.filter(j => j.scheduled_date?.startsWith(today));
+        setTodaysCount(todayJobs.length);
+
+        // Pending approvals = Quote Sent
+        setPendingCount(jobs.filter(j => j.status === 'Quote Sent').length);
+
+        // Team status from profiles
+        const { data: profiles } = await supabase.from('profiles').select('status');
+        if (profiles) {
+          setTeamOnSite(profiles.filter(p => p.status === 'On Site').length);
+          setTeamEnRoute(profiles.filter(p => p.status === 'En Route').length);
+          setTeamAvailable(profiles.filter(p => !p.status || p.status === 'Available').length);
+        }
+      } catch (err) {
+        console.error('Failed to load KPIs:', err);
+      }
+    }
+    loadKpis();
+  }, []);
 
   const kpis = [
     {
       title: 'Jobs Scheduled Today',
-      value: todaysJobs.length,
+      value: todaysCount,
       icon: Calendar,
       color: 'text-vision-green',
       bgColor: 'bg-green-50',
-      trend: '+2 from yesterday',
+      trend: 'Booked for today',
     },
     {
       title: 'Team Status',
@@ -58,7 +83,7 @@ export function KpiCards() {
     },
     {
       title: 'Pending Approvals',
-      value: pendingApprovals,
+      value: pendingCount,
       icon: FileCheck,
       color: 'text-solar-orange',
       bgColor: 'bg-orange-50',
@@ -85,20 +110,19 @@ export function KpiCards() {
               </div>
 
               {kpi.value === -1 ? (
-                /* Team Status special rendering */
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 flex-wrap">
                     <Badge className="bg-vision-green/15 text-green-dark border-0 hover:bg-vision-green/20">
                       <span className="w-1.5 h-1.5 rounded-full bg-vision-green mr-1.5 animate-pulse-dot" />
-                      {teamCounts.onSite} On Site
+                      {teamOnSite} On Site
                     </Badge>
                     <Badge className="bg-solar-orange/15 text-orange-dark border-0 hover:bg-solar-orange/20">
                       <span className="w-1.5 h-1.5 rounded-full bg-solar-orange mr-1.5 animate-pulse-dot" />
-                      {teamCounts.enRoute} En Route
+                      {teamEnRoute} En Route
                     </Badge>
                     <Badge className="bg-gray-100 text-dark-gray border-0 hover:bg-gray-200">
                       <span className="w-1.5 h-1.5 rounded-full bg-mid-gray mr-1.5" />
-                      {teamCounts.available} Available
+                      {teamAvailable} Available
                     </Badge>
                   </div>
                 </div>

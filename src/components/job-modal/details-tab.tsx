@@ -46,16 +46,48 @@ export function DetailsTab({ jobId, onSuccess }: DetailsTabProps) {
   const [clients, setClients] = useState<Client[]>([]);
 
   useEffect(() => {
-    async function loadClients() {
+    async function loadData() {
       try {
-        const data = await jobService.fetchClients();
-        setClients(data);
+        setLoading(true);
+        const clientsData = await jobService.fetchClients();
+        setClients(clientsData);
+
+        if (jobId) {
+          const jobData = await jobService.fetchJobById(jobId);
+          if (jobData) {
+            setSelectedClient(jobData.client_id);
+            if (jobData.client) {
+              setClientSearch(`${jobData.client.first_name} ${jobData.client.last_name}`);
+            }
+            setAddress(jobData.address || '');
+            setStatus(jobData.status || 'Quote');
+            setCategory(jobData.category || 'Installation');
+            setPoNumber(jobData.po_number || '');
+            setDescription(jobData.description || '');
+            setContactName(jobData.contact_name || '');
+            setContactEmail(jobData.contact_email || '');
+            setContactPhone(jobData.contact_phone || '');
+            setBillingSameAsJob(jobData.billing_same_as_job !== false);
+
+            // Fetch checklist
+            const checklistData = await jobService.fetchChecklist(jobId);
+            if (checklistData && checklistData.length > 0) {
+              setChecklist(checklistData.map(item => ({
+                id: item.id,
+                text: item.text,
+                completed: item.completed
+              })));
+            }
+          }
+        }
       } catch (error) {
-        console.error('Failed to load clients:', error);
+        console.error('Failed to load data:', error);
+      } finally {
+        setLoading(false);
       }
     }
-    loadClients();
-  }, []);
+    loadData();
+  }, [jobId]);
 
   const filteredClients = clients.filter(c => {
     if (!clientSearch) return true;

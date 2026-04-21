@@ -1,28 +1,47 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HistoryFilters } from '@/components/history/history-filters';
 import { HistoryTable } from '@/components/history/history-table';
 import { AuditLog } from '@/components/history/audit-log';
-import { getCompletedJobs, mockJobs } from '@/lib/mock-data';
+import { jobService } from '@/lib/supabase/service';
+import { useAuth } from '@/components/providers/auth-provider';
+import { Loader2 } from 'lucide-react';
+import type { Job } from '@/lib/types';
 
 const PAGE_SIZE = 10;
 
 export default function HistoryPage() {
+  const { user, profile, loading: authLoading } = useAuth();
   const [search, setSearch] = useState('');
   const [dateRange, setDateRange] = useState('All');
   const [statusFilter, setStatusFilter] = useState<string[]>([]);
   const [page, setPage] = useState(1);
+  const [allHistoryJobs, setAllHistoryJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Get all historical jobs
-  const allHistoryJobs = useMemo(() => {
-    return mockJobs.filter(j =>
-      ['Completed', 'Cancelled', 'Archived'].includes(j.status)
-    );
-  }, []);
+  useEffect(() => {
+    async function loadHistory() {
+      if (!user || !profile) return;
+      setLoading(true);
+      try {
+        const jobs = await jobService.fetchJobs({
+          role: profile.role,
+          userId: user.id,
+          statuses: ['Completed', 'Cancelled', 'Archived']
+        });
+        setAllHistoryJobs(jobs);
+      } catch (error) {
+        console.error('Failed to load history:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (!authLoading) loadHistory();
+  }, [user, profile, authLoading]);
 
-  // Apply filters
+  // Apply frontend filters
   const filteredJobs = useMemo(() => {
     let jobs = allHistoryJobs;
 
@@ -31,11 +50,11 @@ export default function HistoryPage() {
       const q = search.toLowerCase();
       jobs = jobs.filter(j =>
         j.job_number.toLowerCase().includes(q) ||
-        j.client?.first_name.toLowerCase().includes(q) ||
-        j.client?.last_name.toLowerCase().includes(q) ||
+        (j.client?.first_name || '').toLowerCase().includes(q) ||
+        (j.client?.last_name || '').toLowerCase().includes(q) ||
         j.address.toLowerCase().includes(q) ||
-        j.system_size?.toLowerCase().includes(q) ||
-        j.description.toLowerCase().includes(q)
+        (j.system_size || '').toLowerCase().includes(q) ||
+        (j.description || '').toLowerCase().includes(q)
       );
     }
 
@@ -79,8 +98,16 @@ export default function HistoryPage() {
   const totalPages = Math.max(1, Math.ceil(filteredJobs.length / PAGE_SIZE));
   const paginatedJobs = filteredJobs.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  if (loading || authLoading) {
+    return (
+      <div className="h-full flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 text-vision-green animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="space-y-6 max-w-[1600px] mx-auto">
+    <div className="space-y-6 max-w-[1600px] mx-auto p-4 md:p-6">
       {/* Page Title */}
       <div>
         <h1 className="text-2xl font-bold text-charcoal">History</h1>
@@ -88,16 +115,16 @@ export default function HistoryPage() {
       </div>
 
       <Tabs defaultValue="jobs" className="space-y-4">
-        <TabsList className="bg-off-white border border-light-gray">
+        <TabsList className="bg-off-white border border-light-gray p-1">
           <TabsTrigger
             value="jobs"
-            className="data-[state=active]:bg-white data-[state=active]:text-charcoal data-[state=active]:shadow-sm"
+            className="data-[state=active]:bg-white data-[state=active]:text-charcoal data-[state=active]:shadow-sm px-6"
           >
             Job History
           </TabsTrigger>
           <TabsTrigger
             value="activity"
-            className="data-[state=active]:bg-white data-[state=active]:text-charcoal data-[state=active]:shadow-sm"
+            className="data-[state=active]:bg-white data-[state=active]:text-charcoal data-[state=active]:shadow-sm px-6"
           >
             Recent Changes
           </TabsTrigger>
@@ -113,25 +140,27 @@ export default function HistoryPage() {
             onStatusFilterChange={(v) => { setStatusFilter(v); setPage(1); }}
           />
 
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-mid-gray">
+          <div className="flex items-center justify-between px-1">
+            <p className="text-sm font-medium text-mid-gray">
               {filteredJobs.length} record{filteredJobs.length !== 1 ? 's' : ''} found
             </p>
           </div>
 
-          <HistoryTable
-            jobs={paginatedJobs}
-            page={page}
-            totalPages={totalPages}
-            onPageChange={setPage}
-          />
+          <div className="bg-white rounded-2xl border border-light-gray shadow-sm overflow-hidden">
+            <HistoryTable
+              jobs={paginatedJobs}
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+            />
+          </div>
         </TabsContent>
 
         <TabsContent value="activity" className="mt-0">
-          <div className="bg-white border border-light-gray rounded-xl py-4 overflow-hidden">
-            <div className="px-4 pb-3 border-b border-light-gray mb-4">
-              <p className="text-sm font-medium text-charcoal">Account Activity Log</p>
-              <p className="text-xs text-mid-gray mt-0.5">Admin-only view of all recent changes</p>
+          <div className="bg-white border border-light-gray rounded-2xl shadow-sm py-4 overflow-hidden">
+            <div className="px-6 pb-4 border-b border-light-gray mb-4">
+              <p className="text-sm font-bold text-charcoal">Account Activity Log</p>
+              <p className="text-xs text-mid-gray mt-1">Real-time view of all significant system changes.</p>
             </div>
             <AuditLog />
           </div>

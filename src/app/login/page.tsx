@@ -87,10 +87,11 @@ export default function LoginPage() {
           <div className="text-center space-y-3">
             <div className="flex items-center justify-center mb-2">
               <Image
-                src="/images/logo.svg"
-                alt="VisionSolar"
-                width={220}
-                height={55}
+                src="/logo.png"
+                alt="TN Solar"
+                width={200}
+                height={200}
+                className="object-contain"
                 priority
               />
             </div>
@@ -116,7 +117,7 @@ export default function LoginPage() {
               <Input
                 id="login-email"
                 type="email"
-                placeholder="name@visionsolar.com.au"
+                placeholder="name@tnsolar.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="h-11 bg-off-white border-light-gray focus:border-vision-green focus:ring-vision-green/20"
@@ -188,7 +189,7 @@ export default function LoginPage() {
           {/* Footer */}
           <div className="text-center">
             <p className="text-xs text-mid-gray">
-              © {new Date().getFullYear()} VisionSolar. All rights reserved.
+              © {new Date().getFullYear()} TN Solar. All rights reserved.
             </p>
           </div>
         </div>

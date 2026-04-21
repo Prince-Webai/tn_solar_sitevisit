@@ -1,141 +1,257 @@
-import { useState, useCallback, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
+'use client';
+
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
+import { ChevronLeft, ChevronRight, X, Loader2, Calendar as CalendarIcon } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { mockProfiles } from '@/lib/mock-data';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { jobService } from '@/lib/supabase/service';
+import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/providers/auth-provider';
+import { toast } from 'sonner';
 import type { Job } from '@/lib/types';
 
-const TIME_SLOTS = [
-  '7:00 am', '8:00 am', '9:00 am', '10:00 am', '11:00 am',
-  '12:00 pm', '1:00 pm', '2:00 pm', '3:00 pm', '4:00 pm',
-  '5:00 pm', '6:00 pm',
-];
-
 const VIEWS = ['Day', 'Week', '2 weeks', 'Month'] as const;
-
-interface ScheduledBlock {
-  jobId: string;
-  staffId: string;
-  slotIndex: number; // which time slot it starts at
-  duration: number;  // how many slots it spans
-}
 
 interface StaffScheduleViewProps {
   onJobClick: (jobId: string) => void;
   refreshKey?: number;
+  onScheduleUpdate?: () => void;
 }
 
-export function StaffScheduleView({ onJobClick, refreshKey }: StaffScheduleViewProps) {
+export function StaffScheduleView({ onJobClick, refreshKey, onScheduleUpdate }: StaffScheduleViewProps) {
+  const { user, profile, loading: authLoading } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
-  const [view, setView] = useState<string>('Day');
-  const [scheduledBlocks, setScheduledBlocks] = useState<ScheduledBlock[]>([]);
-  const [dragOverCell, setDragOverCell] = useState<{ staffId: string; slotIndex: number } | null>(null);
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [view, setView]                 = useState<string>('Day');
+  const [dragOverRow, setDragOverRow]   = useState<string | null>(null);
+  const [dragSlot, setDragSlot]         = useState<number | null>(null);
+  const [jobs, setJobs]                 = useState<Job[]>([]);
+  const [staffMembers, setStaffMembers] = useState<any[]>([]);
+  const [loading, setLoading]           = useState(true);
+  const gridRef = useRef<HTMLDivElement>(null);
+  const supabase = createClient();
+
+  // Dynamically generate columns based on view
+  const columns = useMemo(() => {
+    if (view === 'Day') {
+      return Array.from({ length: 12 }).map((_, i) => {
+        const h = 7 + i;
+        const label = h > 12 ? `${h - 12} pm` : h === 12 ? '12 pm' : `${h} am`;
+        const date = new Date(selectedDate);
+        date.setHours(h, 0, 0, 0);
+        return { label, date, isDay: false };
+      });
+    }
+    
+    const daysCount = view === 'Week' ? 7 : view === '2 weeks' ? 14 : 30;
+    const cols = [];
+    let startDate = new Date(selectedDate);
+    if (view === 'Month') {
+      startDate.setDate(1);
+    } else {
+      const day = startDate.getDay();
+      const diff = startDate.getDate() - day + (day === 0 ? -6 : 1);
+      startDate.setDate(diff);
+    }
+
+    for (let i = 0; i < daysCount; i++) {
+      const d = new Date(startDate);
+      d.setDate(d.getDate() + i);
+      cols.push({
+        label: d.toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' }),
+        date: d,
+        isDay: true
+      });
+    }
+    return cols;
+  }, [view, selectedDate]);
+
+  const isTimeView = view === 'Day';
+  const COL_WIDTH = isTimeView ? 90 : 120;
+  const STAFF_COL_W = 100; // Reduced for mobile
 
   useEffect(() => {
     async function loadData() {
+      if (!user || !profile) return;
+      setLoading(true);
       try {
-        const data = await jobService.fetchJobs();
-        setJobs(data);
+        const jobsData = await jobService.fetchJobs({
+          role: profile.role,
+          userId: user.id
+        });
+        
+        let profilesQuery = supabase.from('profiles').select('*').in('role', ['Technician', 'Engineer']);
+        
+        if (profile.role === 'Engineer' || profile.role === 'Technician') {
+          profilesQuery = profilesQuery.eq('id', user.id);
+        }
+
+        const profilesResponse = await profilesQuery;
+        
+        setJobs(jobsData);
+        const seen = new Set();
+        const unique = (profilesResponse.data || []).filter((p: any) => {
+          if (seen.has(p.id)) return false;
+          seen.add(p.id);
+          return true;
+        });
+        setStaffMembers(unique);
       } catch (error) {
         console.error('Failed to load schedule data:', error);
       } finally {
         setLoading(false);
       }
     }
-    loadData();
-  }, [refreshKey]);
+    if (!authLoading) loadData();
+  }, [refreshKey, user, profile, authLoading]);
 
-  const staffMembers = mockProfiles.filter(p => p.role === 'Technician' || p.role === 'Dispatcher');
-
-  const dateLabel = selectedDate.toLocaleDateString('en-AU', {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
+  const dateLabelShort = selectedDate.toLocaleDateString('en-IN', {
+    day: 'numeric', month: 'short'
+  });
+  
+  const dateLabelFull = selectedDate.toLocaleDateString('en-IN', {
+    weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
   });
 
   const prevDay = () => setSelectedDate(d => new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1));
   const nextDay = () => setSelectedDate(d => new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1));
   const goToday = () => setSelectedDate(new Date());
 
-  const handleDragOver = useCallback((e: React.DragEvent, staffId: string, slotIndex: number) => {
+  const clientXToSlot = useCallback((clientX: number): number => {
+    if (!gridRef.current) return 0;
+    const rect = gridRef.current.getBoundingClientRect();
+    const scrollLeft = gridRef.current.scrollLeft;
+    const x = clientX - rect.left + scrollLeft - STAFF_COL_W;
+    const idx = Math.floor(x / COL_WIDTH);
+    return Math.max(0, Math.min(columns.length - 1, idx));
+  }, [columns.length, COL_WIDTH, STAFF_COL_W]);
+
+  const handleRowDragOver = useCallback((e: React.DragEvent, staffId: string) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
-    setDragOverCell({ staffId, slotIndex });
+    setDragOverRow(staffId);
+    setDragSlot(clientXToSlot(e.clientX));
+  }, [clientXToSlot]);
+
+  const handleRowDragLeave = useCallback((e: React.DragEvent) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+      setDragOverRow(null);
+      setDragSlot(null);
+    }
   }, []);
 
-  const handleDragLeave = useCallback(() => {
-    setDragOverCell(null);
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent, staffId: string, slotIndex: number) => {
+  const handleRowDrop = useCallback(async (e: React.DragEvent, staffId: string) => {
     e.preventDefault();
-    setDragOverCell(null);
+    setDragOverRow(null);
+    setDragSlot(null);
 
-    const jobId = e.dataTransfer.getData('application/job-id');
-    if (!jobId) return;
+    const jobId = e.dataTransfer.getData('text/plain');
+    if (!jobId) {
+      toast.error('Could not read job. Try again.');
+      return;
+    }
 
-    // Find the job to determine duration
-    const job = jobs.find(j => j.id === jobId);
-    const duration = job?.estimated_hours ? Math.ceil(job.estimated_hours) : 2;
+    const slotIndex = clientXToSlot(e.clientX);
+    const col = columns[slotIndex];
+    if (!col) return;
 
-    // Remove any existing block for this job
-    setScheduledBlocks(prev => {
-      const filtered = prev.filter(b => b.jobId !== jobId);
-      return [...filtered, { jobId, staffId, slotIndex, duration }];
-    });
-  }, []);
+    const scheduledDate = new Date(col.date);
+    if (col.isDay) {
+      scheduledDate.setHours(9, 0, 0, 0);
+    }
 
-  const removeBlock = (jobId: string) => {
-    setScheduledBlocks(prev => prev.filter(b => b.jobId !== jobId));
+    try {
+      await jobService.assignJob(jobId, staffId, scheduledDate.toISOString());
+      setJobs(await jobService.fetchJobs());
+      toast.success(`Assigned at ${col.label}`);
+      onScheduleUpdate?.();
+    } catch (err) {
+      console.error('Assign error:', err);
+      toast.error('Failed to assign job.');
+    }
+  }, [clientXToSlot, columns, onScheduleUpdate]);
+
+  const getSlotIndex = useCallback((job: Job) => {
+    if (!job.scheduled_date) return -1;
+    const d = new Date(job.scheduled_date);
+    
+    if (isTimeView) {
+      if (d.toDateString() !== selectedDate.toDateString()) return -1;
+      const localHour = d.getHours();
+      return Math.max(0, Math.min(columns.length - 1, localHour - 7));
+    } else {
+      return columns.findIndex(c => c.date.toDateString() === d.toDateString());
+    }
+  }, [isTimeView, selectedDate, columns]);
+
+  const getJobsForStaff = useCallback((staffId: string) =>
+    jobs.filter(j => {
+      if (!j.assigned_to || !j.scheduled_date || j.assigned_to !== staffId) return false;
+      return getSlotIndex(j) >= 0;
+    }), [jobs, getSlotIndex]);
+
+  const getDuration = (job: Job) => {
+    if (!isTimeView) return 1;
+    return job.estimated_hours ? Math.max(1, Math.ceil(Number(job.estimated_hours))) : 1;
   };
 
-  const getBlockForCell = (staffId: string, slotIndex: number): ScheduledBlock | undefined => {
-    return scheduledBlocks.find(b =>
-      b.staffId === staffId && b.slotIndex === slotIndex
+  const removeAssignment = async (jobId: string) => {
+    try {
+      await jobService.updateJob(jobId, { assigned_to: null as any, scheduled_date: null as any });
+      setJobs(await jobService.fetchJobs());
+      toast.success('Assignment removed');
+      onScheduleUpdate?.();
+    } catch {
+      toast.error('Failed to remove');
+    }
+  };
+
+  if (loading || authLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-vision-green animate-spin" />
+      </div>
     );
-  };
-
-  const isCellOccupied = (staffId: string, slotIndex: number): boolean => {
-    return scheduledBlocks.some(b =>
-      b.staffId === staffId &&
-      slotIndex >= b.slotIndex &&
-      slotIndex < b.slotIndex + b.duration
-    );
-  };
+  }
 
   return (
-    <div className="h-full flex flex-col">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-light-gray bg-white shrink-0">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={goToday}
-            className="text-xs text-mid-gray font-medium hover:text-charcoal px-2 py-1 rounded hover:bg-off-white transition-colors"
-          >
+    <div className="h-full flex flex-col bg-white overflow-hidden">
+      {/* ── Compact Responsive Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between px-3 py-2 border-b border-light-gray bg-white shrink-0 gap-3">
+        
+        {/* Date & Nav Group */}
+        <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-1 bg-off-white rounded-lg p-0.5 border border-light-gray/60">
+            <button onClick={prevDay} className="p-1.5 rounded-md hover:bg-white hover:shadow-sm transition-all active:scale-90">
+              <ChevronLeft className="w-4 h-4 text-dark-gray" />
+            </button>
+            <Popover>
+              <PopoverTrigger className="px-2 py-1.5 text-xs font-bold text-charcoal flex items-center gap-1.5 hover:bg-white rounded-md transition-all">
+                <CalendarIcon className="w-3.5 h-3.5 text-vision-green" />
+                <span className="hidden xs:inline">{dateLabelFull}</span>
+                <span className="xs:hidden">{dateLabelShort}</span>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar mode="single" selected={selectedDate} onSelect={(d) => d && setSelectedDate(d)} initialFocus />
+              </PopoverContent>
+            </Popover>
+            <button onClick={nextDay} className="p-1.5 rounded-md hover:bg-white hover:shadow-sm transition-all active:scale-90">
+              <ChevronRight className="w-4 h-4 text-dark-gray" />
+            </button>
+          </div>
+          <button onClick={goToday} className="text-[10px] uppercase tracking-wider font-bold text-vision-green bg-vision-green/5 border border-vision-green/20 px-3 py-2 rounded-lg hover:bg-vision-green hover:text-white transition-all active:scale-95">
             Today
           </button>
-          <button onClick={prevDay} className="text-mid-gray hover:text-charcoal p-0.5 rounded hover:bg-off-white">
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <button onClick={nextDay} className="text-mid-gray hover:text-charcoal p-0.5 rounded hover:bg-off-white">
-            <ChevronRight className="w-4 h-4" />
-          </button>
         </div>
-
-        <span className="text-sm font-semibold text-charcoal">{dateLabel}</span>
-
-        <div className="flex items-center bg-off-white rounded-md p-0.5 border border-light-gray">
+        
+        {/* View Toggles (Scrollable on mobile) */}
+        <div className="flex items-center overflow-x-auto no-scrollbar bg-off-white rounded-lg p-1 border border-light-gray/60 w-full sm:w-auto justify-between sm:justify-start">
           {VIEWS.map(v => (
-            <button
-              key={v}
+            <button 
+              key={v} 
               onClick={() => setView(v)}
-              className={`px-2.5 py-1 text-xs font-medium rounded transition-all ${
-                view === v
-                  ? 'bg-white text-charcoal shadow-sm'
-                  : 'text-mid-gray hover:text-dark-gray'
+              className={`flex-1 sm:flex-none px-3 py-1.5 text-[10px] font-bold uppercase tracking-tight rounded-md transition-all whitespace-nowrap ${
+                view === v ? 'bg-white text-vision-green shadow-sm ring-1 ring-black/5' : 'text-mid-gray hover:text-charcoal'
               }`}
             >
               {v}
@@ -144,121 +260,125 @@ export function StaffScheduleView({ onJobClick, refreshKey }: StaffScheduleViewP
         </div>
       </div>
 
-      {/* Schedule Grid */}
-      <div className="flex-1 overflow-auto bg-white">
-        <table className="w-full border-collapse min-w-[900px]">
+      {/* ── Main Schedule Grid ── */}
+      <div ref={gridRef} className="flex-1 overflow-auto bg-white select-none relative scroll-smooth no-scrollbar md:scrollbar">
+        <div style={{ minWidth: STAFF_COL_W + columns.length * COL_WIDTH }}>
+
           {/* Time header */}
-          <thead className="sticky top-0 z-10 bg-white">
-            <tr>
-              <th className="w-[120px] min-w-[120px] px-3 py-2 text-left border-b border-r border-light-gray bg-off-white/70">
-                <span className="text-[10px] text-mid-gray uppercase tracking-wider font-semibold">Staff</span>
-              </th>
-              {TIME_SLOTS.map((slot, i) => (
-                <th
-                  key={i}
-                  className="min-w-[80px] px-2 py-2 text-center border-b border-r border-light-gray bg-off-white/70"
-                >
-                  <span className="text-[10px] text-mid-gray font-medium">{slot}</span>
-                </th>
-              ))}
-            </tr>
-          </thead>
+          <div className="flex border-b border-light-gray sticky top-0 bg-white z-30 h-10">
+            <div style={{ width: STAFF_COL_W }} className="shrink-0 px-3 flex items-center border-r border-light-gray bg-off-white/80 backdrop-blur-md sticky left-0 z-40 shadow-[2px_0_8px_rgba(0,0,0,0.02)]">
+              <span className="text-[9px] text-mid-gray uppercase tracking-widest font-black">Staff</span>
+            </div>
+            {columns.map((col, i) => (
+              <div key={i} style={{ width: COL_WIDTH }} className="shrink-0 px-2 flex items-center justify-center border-r border-light-gray bg-off-white/50 text-center">
+                <span className={`text-[10px] font-bold tracking-tight ${col.date.toDateString() === new Date().toDateString() ? 'text-solar-orange' : 'text-mid-gray'}`}>
+                  {col.label}
+                </span>
+              </div>
+            ))}
+          </div>
 
           {/* Staff rows */}
-          <tbody>
-            {staffMembers.map(staff => (
-              <tr key={staff.id} className="group/row">
-                {/* Staff name cell */}
-                <td className="px-3 py-3 border-b border-r border-light-gray bg-white sticky left-0 z-[5]">
-                  <div className="flex items-center gap-2">
-                    <Avatar className="w-7 h-7 shrink-0">
-                      <AvatarFallback className="bg-vision-green/10 text-green-dark text-[10px] font-semibold">
-                        {staff.full_name.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-xs font-medium text-charcoal truncate">{staff.full_name}</span>
+          {staffMembers.map(staff => {
+            const assignedJobs = getJobsForStaff(staff.id);
+            const isOver = dragOverRow === staff.id;
+
+            return (
+              <div key={staff.id} className="flex border-b border-light-gray group/row" style={{ minHeight: 64 }}>
+                {/* Staff Info (Sticky Left) */}
+                <div style={{ width: STAFF_COL_W }} className="shrink-0 px-2 py-3 border-r border-light-gray bg-white sticky left-0 z-20 shadow-[2px_0_8px_rgba(0,0,0,0.02)] flex flex-col items-center justify-center gap-1 group-hover/row:bg-off-white/30 transition-colors">
+                  <Avatar className="w-8 h-8 shrink-0 ring-2 ring-off-white">
+                    <AvatarFallback className="bg-vision-green text-white text-[10px] font-black uppercase">
+                      {staff.full_name.split(' ').map((n: string) => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-[10px] font-bold text-charcoal truncate w-full text-center px-1">
+                    {staff.full_name.split(' ')[0]}
+                  </span>
+                </div>
+
+                {/* Slots Area */}
+                <div
+                  className="relative flex-1"
+                  style={{ width: columns.length * COL_WIDTH, height: 64 }}
+                  onDragOver={(e) => handleRowDragOver(e, staff.id)}
+                  onDragLeave={handleRowDragLeave}
+                  onDrop={(e) => handleRowDrop(e, staff.id)}
+                >
+                  {/* Grid lines */}
+                  <div className="flex h-full pointer-events-none">
+                    {columns.map((_, i) => (
+                      <div
+                        key={i}
+                        style={{ width: COL_WIDTH }}
+                        className={`h-full border-r border-light-gray/50 shrink-0 transition-colors ${
+                          isOver && dragSlot === i ? 'bg-vision-green/10' : ''
+                        }`}
+                      />
+                    ))}
                   </div>
-                </td>
 
-                {/* Time slot cells */}
-                {TIME_SLOTS.map((_, slotIndex) => {
-                  const block = getBlockForCell(staff.id, slotIndex);
-                  const occupied = !block && isCellOccupied(staff.id, slotIndex);
-                  const isHovered = dragOverCell?.staffId === staff.id && dragOverCell?.slotIndex === slotIndex;
+                  {/* Hover indicator */}
+                  {isOver && dragSlot !== null && (
+                    <div
+                      className={`absolute top-0 bottom-0 pointer-events-none z-10 ${isTimeView ? 'w-0.5 bg-vision-green' : 'bg-vision-green/10'}`}
+                      style={{ left: dragSlot * COL_WIDTH, width: isTimeView ? 2 : COL_WIDTH }}
+                    />
+                  )}
 
-                  // If this cell is occupied by a block that starts earlier, skip rendering content
-                  if (occupied) {
-                    return null; // will be covered by colspan of the block
-                  }
-
-                  if (block) {
-                    const job = jobs.find(j => j.id === block.jobId);
-                    const isQuote = job && ['Quote', 'Quote Sent', 'Lead'].includes(job.status);
+                  {/* Job blocks */}
+                  {assignedJobs.map(job => {
+                    const si = getSlotIndex(job);
+                    if (si < 0) return null;
+                    const dur = getDuration(job);
+                    const isQuote = ['Quote', 'Quote Sent', 'Lead'].includes(job.status);
+                    
                     return (
-                      <td
-                        key={slotIndex}
-                        colSpan={block.duration}
-                        className="border-b border-r border-light-gray p-1"
+                      <div
+                        key={job.id}
+                        className={`absolute top-1.5 h-[52px] overflow-hidden rounded-lg cursor-pointer group/block z-20 shadow-sm border transition-all hover:scale-[1.02] active:scale-95
+                          ${isQuote ? 'bg-solar-orange/10 border-solar-orange/30' : 'bg-blue-50 border-blue-200'}`}
+                        style={{ left: si * COL_WIDTH + 4, width: dur * COL_WIDTH - 8 }}
+                        onClick={() => onJobClick(job.id)}
                       >
-                        <div
-                          className={`relative rounded-md px-2.5 py-1.5 h-full min-h-[44px] cursor-pointer group/block transition-all
-                            ${isQuote
-                              ? 'bg-solar-orange/15 border border-solar-orange/30 hover:bg-solar-orange/25'
-                              : 'bg-blue-50 border border-blue-200 hover:bg-blue-100'
-                            }`}
-                          onClick={() => onJobClick(block.jobId)}
-                        >
-                          <p className={`text-xs font-semibold truncate ${isQuote ? 'text-orange-dark' : 'text-blue-700'}`}>
-                            {job?.client?.first_name} {job?.client?.last_name}
+                        <div className="px-2.5 h-full flex flex-col justify-center overflow-hidden">
+                          <p className={`text-[10px] font-black truncate uppercase tracking-tight ${isQuote ? 'text-orange-dark' : 'text-blue-700'}`}>
+                            {job.client?.first_name}
                           </p>
-                          <p className={`text-[10px] truncate mt-0.5 ${isQuote ? 'text-solar-orange' : 'text-blue-500'}`}>
-                            {job?.job_number} • {block.duration}h
+                          <p className={`text-[9px] font-bold truncate opacity-80 ${isQuote ? 'text-solar-orange' : 'text-blue-500'}`}>
+                            {job.job_number}
                           </p>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); removeBlock(block.jobId); }}
-                            className="absolute top-1 right-1 w-4 h-4 rounded-full bg-white/80 flex items-center justify-center opacity-0 group-hover/block:opacity-100 transition-opacity shadow-sm hover:bg-red-50"
-                          >
-                            <X className="w-2.5 h-2.5 text-mid-gray hover:text-destructive" />
-                          </button>
                         </div>
-                      </td>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); removeAssignment(job.id); }}
+                          className="absolute top-1 right-1 w-5 h-5 rounded-full bg-white/90 shadow-sm flex items-center justify-center opacity-0 group-hover/block:opacity-100 transition-opacity hover:bg-red-50 hover:text-red-500"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
                     );
-                  }
+                  })}
+                </div>
+              </div>
+            );
+          })}
 
-                  return (
-                    <td
-                      key={slotIndex}
-                      className={`border-b border-r border-light-gray transition-colors min-h-[44px] ${
-                        isHovered
-                          ? 'bg-vision-green/10 ring-2 ring-inset ring-vision-green/30'
-                          : 'hover:bg-off-white/50'
-                      }`}
-                      onDragOver={(e) => handleDragOver(e, staff.id, slotIndex)}
-                      onDragLeave={handleDragLeave}
-                      onDrop={(e) => handleDrop(e, staff.id, slotIndex)}
-                    >
-                      <div className="min-h-[44px]" />
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-
-            {staffMembers.length === 0 && (
-              <tr>
-                <td colSpan={TIME_SLOTS.length + 1} className="text-center py-16">
-                  <p className="text-sm text-mid-gray">No staff members found</p>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+          {staffMembers.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-20 bg-off-white/30">
+              <div className="w-16 h-16 rounded-full bg-off-white flex items-center justify-center mb-4 border border-light-gray/60">
+                <Loader2 className="w-8 h-8 text-light-gray" />
+              </div>
+              <p className="text-sm font-bold text-mid-gray">No staff members assigned</p>
+              <p className="text-xs text-mid-gray/70 mt-1">Add staff to view their schedules</p>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Drop hint */}
-      <div className="bg-off-white border-t border-light-gray px-4 py-2 shrink-0">
-        <p className="text-[10px] text-mid-gray text-center">
-          Drag jobs from the Jobs panel and drop them on a staff member&apos;s time slot to schedule
+      {/* ── Mobile Hint ── */}
+      <div className="bg-off-white/80 backdrop-blur-sm border-t border-light-gray px-4 py-2 shrink-0 text-center">
+        <p className="text-[9px] font-black uppercase tracking-widest text-mid-gray/60">
+          Scroll horizontally to view times · Tap to open job
         </p>
       </div>
     </div>

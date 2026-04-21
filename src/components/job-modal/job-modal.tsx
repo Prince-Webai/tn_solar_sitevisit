@@ -1,16 +1,19 @@
 'use client';
 
-import { useState } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ChevronDown, Printer, FileText, Receipt, MoreHorizontal } from 'lucide-react';
+import { ChevronDown, Printer, FileText, Receipt, MoreHorizontal, Loader2 } from 'lucide-react';
 import { DetailsTab } from './details-tab';
-import { BillingTab } from './billing-tab';
 import { SavedTab } from './saved-tab';
+import { SiteVisitForm } from '../site-visit/SiteVisitForm';
+import { SiteVisitReport } from '../site-visit/SiteVisitReport';
+import { siteVisitService } from '@/lib/supabase/site-visit-service';
+import { useAuth } from '@/components/providers/auth-provider';
 
 const TABS = [
   { id: 'details', label: 'Details' },
-  { id: 'billing', label: 'Billing' },
+  { id: 'site-visit', label: 'Site Visit' },
   { id: 'saved', label: 'Saved' },
 ] as const;
 
@@ -28,17 +31,16 @@ export function JobModal({ open, onOpenChange, jobId, onSuccess }: JobModalProps
   const isEditing = !!jobId;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="w-[600px] sm:max-w-[600px] p-0 flex flex-col gap-0 bg-white [&>button]:top-3 [&>button]:right-3"
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        className="w-[95vw] sm:max-w-[1000px] h-[85vh] p-0 flex flex-col gap-0 bg-white overflow-hidden [&>button]:top-4 [&>button]:right-4"
       >
         {/* Header */}
-        <SheetHeader className="px-6 py-4 border-b border-light-gray shrink-0">
+        <DialogHeader className="px-6 py-4 border-b border-light-gray shrink-0">
           <div className="flex items-center justify-between">
-            <SheetTitle className="text-lg font-semibold text-charcoal">
+            <DialogTitle className="text-lg font-semibold text-charcoal">
               {isEditing ? `Edit Job` : 'New Job'}
-            </SheetTitle>
+            </DialogTitle>
             <div className="flex items-center gap-2 mr-6">
               <DropdownMenu>
                 <DropdownMenuTrigger className="inline-flex items-center justify-center h-8 gap-1.5 px-3 text-xs rounded-md border border-light-gray bg-white hover:bg-off-white transition-colors font-medium">
@@ -60,7 +62,7 @@ export function JobModal({ open, onOpenChange, jobId, onSuccess }: JobModalProps
               </DropdownMenu>
             </div>
           </div>
-        </SheetHeader>
+        </DialogHeader>
 
         {/* Tab Bar */}
         <div className="flex border-b border-light-gray shrink-0">
@@ -89,10 +91,78 @@ export function JobModal({ open, onOpenChange, jobId, onSuccess }: JobModalProps
               onOpenChange(false);
             }} />
           )}
-          {activeTab === 'billing' && <BillingTab />}
+          {activeTab === 'site-visit' && jobId && (
+            <SiteVisitTab jobId={jobId} />
+          )}
           {activeTab === 'saved' && <SavedTab />}
         </div>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function SiteVisitTab({ jobId }: { jobId: string }) {
+  const { profile } = useAuth();
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        setLoading(true);
+        const visit = await siteVisitService.fetchByJobId(jobId);
+        setData(visit);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, [jobId]);
+
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center py-20">
+        <Loader2 className="w-8 h-8 text-vision-green animate-spin" />
+      </div>
+    );
+  }
+
+  // If visit is completed and we're not in edit mode, show report
+  if (data && !isEditing) {
+    return (
+      <div className="p-6 bg-off-white min-h-full space-y-4">
+        <div className="max-w-4xl mx-auto flex justify-end">
+          {['Admin', 'Engineer', 'Technician'].includes(profile?.role || '') && (
+            <button 
+              onClick={() => setIsEditing(true)}
+              className="text-xs font-bold text-vision-green hover:underline flex items-center gap-1.5"
+            >
+              Edit Assessment
+            </button>
+          )}
+        </div>
+        <SiteVisitReport data={data} />
+      </div>
+    );
+  }
+
+  // Otherwise show the form
+  return (
+    <div className="p-6 bg-off-white min-h-full">
+      {isEditing && (
+        <div className="max-w-4xl mx-auto mb-4 flex justify-start">
+          <button 
+            onClick={() => setIsEditing(false)}
+            className="text-xs font-bold text-mid-gray hover:text-charcoal flex items-center gap-1.5"
+          >
+            ← Back to Report
+          </button>
+        </div>
+      )}
+      <SiteVisitForm jobId={jobId} />
+    </div>
   );
 }

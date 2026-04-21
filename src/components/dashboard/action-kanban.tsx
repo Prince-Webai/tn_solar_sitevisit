@@ -1,9 +1,11 @@
-'use client';
-
-import { Package, Search, ArrowRight } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Package, Search, ArrowRight, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { mockJobs } from '@/lib/mock-data';
+import { jobService } from '@/lib/supabase/service';
+import { useAuth } from '@/components/providers/auth-provider';
+import type { Job } from '@/lib/types';
+import type { Profile } from '@/lib/types';
 
 interface KanbanCardProps {
   jobNumber: string;
@@ -43,11 +45,44 @@ interface ActionKanbanProps {
 }
 
 export function ActionKanban({ onJobClick }: ActionKanbanProps) {
+  const { user, profile, loading: authLoading } = useAuth();
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      if (!user || !profile) return;
+      try {
+        const data = await jobService.fetchJobs({ 
+          role: profile.role, 
+          userId: user.id 
+        });
+        setJobs(data);
+      } catch (error) {
+        console.error('Failed to load dashboard data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (!authLoading) loadData();
+  }, [user, profile, authLoading]);
+
+  if (loading || authLoading) {
+    return (
+      <Card className="border-light-gray h-[400px] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-vision-green animate-spin" />
+      </Card>
+    );
+  }
+
   // Parts to order: materials_status = 'Pending'
-  const partsToOrder = mockJobs.filter(j => j.materials_status === 'Pending');
+  const partsToOrder = jobs.filter(j => j.materials_status === 'Pending');
 
   // Pending site assessments: status = 'Lead' and requires_site_visit = true
-  const pendingAssessments = mockJobs.filter(j => j.status === 'Lead' && j.requires_site_visit);
+  const pendingAssessments = jobs.filter(j => 
+    (j.status === 'Lead' && j.requires_site_visit) || 
+    (j.status === 'Quote' && j.requires_site_visit)
+  );
 
   const columns = [
     {
@@ -73,7 +108,9 @@ export function ActionKanban({ onJobClick }: ActionKanbanProps) {
   return (
     <Card className="border-light-gray">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold text-charcoal">Action Required</CardTitle>
+        <CardTitle className="text-base font-semibold text-charcoal">
+          {profile?.role === 'Engineer' || profile?.role === 'Technician' ? 'My Assigned Tasks' : 'Action Required'}
+        </CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

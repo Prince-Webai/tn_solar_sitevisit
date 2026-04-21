@@ -1,164 +1,227 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
-  Plus, Package, Clock, Wrench, UserPlus,
-  Map, ListChecks, CalendarDays, Users, Layers,
+  Plus, Package, Clock, Wrench,
+  Map, ListChecks, CalendarDays, Users, Layers, Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
 import { JobModal } from '@/components/job-modal/job-modal';
+import { BookSiteVisitDialog } from '@/components/job-modal/book-site-visit-dialog';
+import { AddStaffDialog } from '@/components/dispatch/add-staff-dialog';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { JobsPanel } from '@/components/dispatch/jobs-panel';
 import { DispatchMap } from '@/components/dispatch/dispatch-map';
 import { TasksView } from '@/components/dispatch/tasks-view';
 import { CalendarView } from '@/components/dispatch/calendar-view';
 import { StaffScheduleView } from '@/components/dispatch/staff-schedule-view';
 import { QueuesView } from '@/components/dispatch/queues-view';
-import { mockProfiles } from '@/lib/mock-data';
+import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/providers/auth-provider';
 
 const TABS = [
-  { id: 'map', label: 'Dispatch Map', icon: Map },
-  { id: 'tasks', label: 'Tasks', icon: ListChecks },
-  { id: 'calendar', label: 'Calendar', icon: CalendarDays },
-  { id: 'schedules', label: 'Staff Schedules', icon: Users },
-  { id: 'queues', label: 'Queues', icon: Layers },
+  { id: 'map',       label: 'Map',            icon: Map },
+  { id: 'tasks',     label: 'Tasks',          icon: ListChecks },
+  { id: 'calendar',  label: 'Calendar',       icon: CalendarDays },
+  { id: 'schedules', label: 'Schedules',      icon: Users },
+  { id: 'queues',    label: 'Queues',         icon: Layers },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
 
 const QUEUE_ACTIONS = [
-  { label: 'Parts on Order', icon: Package },
-  { label: 'Pending Quotes', icon: Clock },
-  { label: 'Workshop', icon: Wrench },
+  { label: 'Parts', icon: Package, tab: 'queues' },
+  { label: 'Quotes', icon: Clock, tab: 'queues' },
+  { label: 'Service', icon: Wrench, tab: 'queues' },
 ];
 
 export default function DispatchPage() {
-  const [activeTab, setActiveTab] = useState<TabId>('schedules');
-  const [jobModalOpen, setJobModalOpen] = useState(false);
-  const [selectedJobId, setSelectedJobId] = useState<string | undefined>();
-  const [refreshKey, setRefreshKey] = useState(0);
+  const { user, profile, loading: authLoading } = useAuth();
+  const [activeTab,      setActiveTab]      = useState<TabId>('tasks');
+  const [jobModalOpen,   setJobModalOpen]   = useState(false);
+  const [bookDialogOpen, setBookDialogOpen] = useState(false);
+  const [addStaffOpen,   setAddStaffOpen]   = useState(false);
+  const [selectedJobId,  setSelectedJobId]  = useState<string | undefined>();
+  const [refreshKey,     setRefreshKey]     = useState(0);
+  const [staffMembers,   setStaffMembers]   = useState<any[]>([]);
+  const supabase = createClient();
 
-  const handleRefresh = () => {
-    setRefreshKey(prev => prev + 1);
-  };
+  const isAdminOrSales = ['Admin', 'Sales', 'Dispatcher'].includes(profile?.role || '');
+  const isEngineer = profile?.role === 'Engineer' || profile?.role === 'Technician';
 
-  const staffMembers = mockProfiles.filter(p => p.role === 'Technician' || p.role === 'Dispatcher');
+  const filteredTabs = TABS.filter(tab => {
+    if (isEngineer && tab.id === 'queues') return false;
+    return true;
+  });
+
+  useEffect(() => {
+    if (isEngineer && !['tasks', 'map', 'calendar', 'schedules'].includes(activeTab)) {
+        setActiveTab('tasks');
+    }
+  }, [profile, activeTab, isEngineer]);
+
+  useEffect(() => {
+    async function loadStaff() {
+      if (!user || !profile) return;
+      let query = supabase.from('profiles').select('id, full_name, role');
+      if (isEngineer) {
+        query = query.eq('id', user.id);
+      } else {
+        query = query.in('role', ['Technician', 'Engineer', 'Dispatcher']);
+      }
+      const { data } = await query;
+      setStaffMembers(data || []);
+    }
+    if (!authLoading) loadStaff();
+  }, [refreshKey, user, profile, authLoading, isEngineer, supabase]);
+
+  const handleRefresh = () => setRefreshKey(prev => prev + 1);
 
   const handleJobDoubleClick = (jobId: string) => {
     setSelectedJobId(jobId);
     setJobModalOpen(true);
   };
 
+  if (authLoading) {
+    return (
+      <div className="h-full flex items-center justify-center bg-off-white/30">
+        <Loader2 className="w-8 h-8 text-vision-green animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <>
-      <div className="flex flex-col h-[calc(100vh-7rem)] -m-6 mt-0">
-        {/* ── Top Action Bar ── */}
-        <div className="bg-white border-b border-light-gray shrink-0">
-          <div className="flex items-center h-[72px] px-4">
-            {/* Actions */}
-            <div className="flex items-center gap-1 pr-5 border-r border-light-gray">
-              <span className="text-[10px] text-mid-gray uppercase tracking-wider mr-2 font-medium">Actions</span>
-              <Button
-                onClick={() => { setSelectedJobId(undefined); setJobModalOpen(true); }}
-                className="bg-solar-orange hover:bg-orange-light text-white gap-1.5 h-9 px-3 text-xs font-semibold shadow-sm shadow-solar-orange/20"
-              >
-                <Plus className="w-3.5 h-3.5" />
-                New Job
-              </Button>
-            </div>
+      <div className="flex flex-col h-[calc(100vh-4rem)] md:h-[calc(100vh-7rem)] md:-m-6 md:mt-0 bg-white">
+        
+        {/* ── Top Header (Condensed for Mobile) ── */}
+        <div className="bg-white border-b border-light-gray shrink-0 z-10">
+          <div className="flex items-center h-14 md:h-16 px-3 md:px-4 gap-2">
 
-            {/* Queues */}
-            <div className="flex items-center gap-4 px-5 border-r border-light-gray">
-              <span className="text-[10px] text-mid-gray uppercase tracking-wider font-medium">Queues</span>
-              {QUEUE_ACTIONS.map(q => {
-                const Icon = q.icon;
-                return (
-                  <button
-                    key={q.label}
-                    onClick={() => setActiveTab('queues')}
-                    className="flex flex-col items-center gap-1 px-2 py-1 rounded-lg hover:bg-off-white transition-colors group"
-                  >
-                    <div className="w-9 h-9 rounded-lg bg-off-white group-hover:bg-white border border-light-gray flex items-center justify-center transition-colors">
-                      <Icon className="w-4 h-4 text-dark-gray" />
-                    </div>
-                    <span className="text-[10px] text-dark-gray font-medium whitespace-nowrap">{q.label}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Staff Members */}
-            <div className="flex items-center gap-3 px-5 flex-1">
-              <span className="text-[10px] text-mid-gray uppercase tracking-wider font-medium">Staff Members</span>
-              <div className="flex items-center gap-2">
-                {staffMembers.map(s => (
-                  <div key={s.id} className="flex flex-col items-center gap-1">
-                    <Avatar className="w-9 h-9 border-2 border-green-light/30">
-                      <AvatarFallback className="bg-vision-green/10 text-green-dark text-xs font-semibold">
-                        {s.full_name.split(' ').map(n => n[0]).join('')}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-[10px] text-dark-gray font-medium truncate max-w-[60px]">
-                      {s.full_name.split(' ')[0]}
-                    </span>
-                  </div>
-                ))}
-                <button className="flex flex-col items-center gap-1 px-2 py-1 rounded-lg hover:bg-off-white transition-colors">
-                  <div className="w-9 h-9 rounded-lg border-2 border-dashed border-light-gray flex items-center justify-center">
-                    <UserPlus className="w-4 h-4 text-mid-gray" />
-                  </div>
-                  <span className="text-[10px] text-mid-gray font-medium">Invite</span>
-                </button>
+            {/* Main Action */}
+            {isAdminOrSales && (
+              <div className="flex items-center pr-2 md:pr-4 border-r border-light-gray">
+                <Button
+                  id="dispatch-new-job-btn"
+                  onClick={() => setBookDialogOpen(true)}
+                  className="bg-vision-green hover:bg-green-dark text-white gap-1.5 h-9 px-3 text-xs font-bold shadow-sm rounded-xl"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span className="hidden xs:inline">New Job</span>
+                </Button>
               </div>
+            )}
+
+            {/* Quick Stats/Queues Shortcuts */}
+            {isAdminOrSales && (
+              <div className="hidden sm:flex items-center gap-2 px-2 md:px-4 border-r border-light-gray overflow-hidden">
+                {QUEUE_ACTIONS.map(q => {
+                  const Icon = q.icon;
+                  return (
+                    <button
+                      key={q.label}
+                      onClick={() => setActiveTab('queues')}
+                      title={q.label}
+                      className="flex flex-col items-center justify-center w-9 h-9 rounded-xl hover:bg-off-white transition-all border border-transparent hover:border-light-gray/40"
+                    >
+                      <Icon className="w-4 h-4 text-dark-gray" />
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Staff Section */}
+            <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0 justify-end md:justify-start">
+              <div className="flex items-center -space-x-2 overflow-hidden">
+                {staffMembers.slice(0, 3).map(s => (
+                  <Avatar key={s.id} className="w-7 h-7 md:w-8 md:h-8 border-2 border-white shadow-sm ring-1 ring-light-gray/50">
+                    <AvatarFallback className="bg-vision-green/10 text-vision-green text-[9px] md:text-[10px] font-bold">
+                      {s.full_name.split(' ').map((n: string) => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                ))}
+                {staffMembers.length > 3 && (
+                  <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-off-white border-2 border-white shadow-sm flex items-center justify-center text-[9px] md:text-[10px] font-bold text-mid-gray ring-1 ring-light-gray/50">
+                    +{staffMembers.length - 3}
+                  </div>
+                )}
+              </div>
+              {isAdminOrSales && (
+                <button 
+                  onClick={() => setAddStaffOpen(true)} 
+                  className="w-7 h-7 md:w-8 md:h-8 rounded-xl border-2 border-dashed border-light-gray/60 flex items-center justify-center text-mid-gray hover:text-vision-green hover:border-vision-green/40 transition-colors"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
           </div>
+
+          {/* ── Tab Navigation ── */}
+          <div className="flex items-center px-2 md:px-4 overflow-x-auto no-scrollbar scroll-smooth">
+            {filteredTabs.map(tab => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-1.5 px-4 md:px-5 py-3 md:py-3.5 text-[11px] md:text-xs font-bold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${
+                    isActive
+                      ? 'border-vision-green text-vision-green'
+                      : 'border-transparent text-dark-gray/60 hover:text-charcoal hover:border-light-gray'
+                  }`}
+                >
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-vision-green' : 'text-mid-gray/50'}`} />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {/* ── Tab Bar ── */}
-        <div className="bg-white border-b border-light-gray shrink-0 flex items-center px-4">
-          {TABS.map(tab => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-3.5 py-2.5 text-xs font-medium border-b-2 transition-all ${
-                  isActive
-                    ? 'border-vision-green text-vision-green'
-                    : 'border-transparent text-dark-gray hover:text-charcoal hover:border-light-gray'
-                }`}
-              >
-                <Icon className="w-3.5 h-3.5" />
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* ── Main Content ── */}
-        <div className="flex flex-1 min-h-0 overflow-hidden">
-          {/* Left: Tab Content */}
-          <div className="flex-1 min-w-0 overflow-auto">
-            {activeTab === 'map' && <DispatchMap refreshKey={refreshKey} onNewJob={() => { setSelectedJobId(undefined); setJobModalOpen(true); }} />}
-            {activeTab === 'tasks' && <TasksView refreshKey={refreshKey} onJobClick={handleJobDoubleClick} />}
-            {activeTab === 'calendar' && <CalendarView refreshKey={refreshKey} />}
-            {activeTab === 'schedules' && <StaffScheduleView refreshKey={refreshKey} onJobClick={handleJobDoubleClick} />}
-            {activeTab === 'queues' && <QueuesView refreshKey={refreshKey} onJobClick={handleJobDoubleClick} />}
+        {/* ── Main View Content ── */}
+        <div className="flex flex-1 min-h-0 overflow-hidden relative">
+          <div className="flex-1 min-w-0 overflow-auto bg-off-white/20">
+            {activeTab === 'map'       && <DispatchMap refreshKey={refreshKey} onNewJob={() => setBookDialogOpen(true)} />}
+            {activeTab === 'tasks'     && <TasksView refreshKey={refreshKey} onJobClick={handleJobDoubleClick} />}
+            {activeTab === 'calendar'  && <CalendarView refreshKey={refreshKey} onJobClick={handleJobDoubleClick} />}
+            {activeTab === 'schedules' && <StaffScheduleView refreshKey={refreshKey} onJobClick={handleJobDoubleClick} onScheduleUpdate={handleRefresh} />}
+            {activeTab === 'queues'    && <QueuesView refreshKey={refreshKey} onJobClick={handleJobDoubleClick} />}
           </div>
 
-          {/* Right: Jobs Panel (always visible) */}
-          <JobsPanel onJobDoubleClick={handleJobDoubleClick} refreshKey={refreshKey} />
+          {/* Jobs Panel (Desktop Only) */}
+          <div className="hidden lg:block">
+            <JobsPanel onJobDoubleClick={handleJobDoubleClick} refreshKey={refreshKey} />
+          </div>
+
+          {/* Mobile Drawer Toggle */}
+          <Sheet>
+            <SheetTrigger
+              render={
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="lg:hidden fixed bottom-24 right-4 w-12 h-12 rounded-2xl shadow-xl bg-vision-green text-white border-none z-40 active:scale-95 transition-all"
+                >
+                  <Layers className="w-5 h-5" />
+                </Button>
+              }
+            />
+            <SheetContent side="right" className="p-0 w-[300px] max-w-[85vw] border-none">
+              <div className="h-full pt-10">
+                <JobsPanel onJobDoubleClick={handleJobDoubleClick} refreshKey={refreshKey} />
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
 
-      <JobModal 
-        open={jobModalOpen} 
-        onOpenChange={setJobModalOpen} 
-        jobId={selectedJobId} 
-        onSuccess={handleRefresh}
-      />
+      <BookSiteVisitDialog open={bookDialogOpen} onOpenChange={setBookDialogOpen} onSuccess={handleRefresh} />
+      <JobModal open={jobModalOpen} onOpenChange={setJobModalOpen} jobId={selectedJobId} onSuccess={handleRefresh} />
+      <AddStaffDialog open={addStaffOpen} onOpenChange={setAddStaffOpen} onSuccess={handleRefresh} />
     </>
   );
 }

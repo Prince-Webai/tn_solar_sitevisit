@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, X, GripVertical, MapPin, Clock } from 'lucide-react';
+import { Search, X, GripVertical, MapPin, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { jobService } from '@/lib/supabase/service';
+import { useAuth } from '@/components/providers/auth-provider';
 import type { Job } from '@/lib/types';
 
 interface JobsPanelProps {
@@ -38,36 +38,39 @@ function JobCard({ job, onDoubleClick }: { job: Job; onDoubleClick: () => void }
     <div
       draggable
       onDragStart={(e) => {
-        e.dataTransfer.setData('application/job-id', job.id);
+        e.dataTransfer.setData('text/plain', job.id);
         e.dataTransfer.effectAllowed = 'move';
       }}
-      onDoubleClick={onDoubleClick}
-      className="px-3 py-2.5 border-b border-light-gray hover:bg-off-white transition-colors cursor-grab active:cursor-grabbing group"
+      onClick={onDoubleClick} // Enable single tap for mobile
+      className="px-3 py-3 border-b border-light-gray hover:bg-off-white transition-colors cursor-grab active:cursor-grabbing group active:bg-off-white"
     >
-      <div className="flex items-start gap-2.5">
+      <div className="flex items-start gap-3">
         {/* Status badge circle */}
-        <div className={`w-8 h-8 rounded-full ${badge.bg} ${badge.text} flex items-center justify-center text-xs font-bold shrink-0 mt-0.5 shadow-sm`}>
+        <div className={`w-9 h-9 rounded-xl ${badge.bg} ${badge.text} flex items-center justify-center text-xs font-black shrink-0 shadow-sm border border-white/20`}>
           {badge.letter}
         </div>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold text-charcoal truncate">
+            <p className="text-sm font-bold text-charcoal truncate">
               {job.client?.first_name} {job.client?.last_name}
             </p>
-            <span className="text-[10px] text-mid-gray font-medium ml-2 shrink-0">#{job.job_number.replace('VS-', '')}</span>
+            <span className="text-[10px] text-mid-gray font-bold ml-2 shrink-0">#{job.job_number.replace('VS-', '')}</span>
           </div>
           <div className="flex items-center gap-1 mt-0.5">
-            <MapPin className="w-3 h-3 text-mid-gray shrink-0" />
-            <p className="text-xs text-mid-gray truncate">{job.address}</p>
+            <MapPin className="w-3 h-3 text-mid-gray/60 shrink-0" />
+            <p className="text-xs text-mid-gray truncate leading-tight">{job.address}</p>
           </div>
-          <div className="flex items-center gap-1 mt-0.5">
+          <div className="flex items-center gap-1.5 mt-1.5">
             <span className={`w-1.5 h-1.5 rounded-full ${dotColor} shrink-0`} />
-            <p className="text-xs text-dark-gray truncate">{job.description?.substring(0, 60)}...</p>
+            <p className="text-[10px] text-dark-gray font-medium uppercase tracking-tight truncate">
+              {job.status} • {job.description?.substring(0, 40)}
+            </p>
           </div>
-          <div className="mt-1.5 flex items-center text-[10px] text-vision-green font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+          
+          <div className="hidden lg:flex mt-2 items-center text-[9px] text-vision-green font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
             <GripVertical className="w-3 h-3 mr-0.5" />
-            Drag to schedule • Double Click to Open Job
+            Drag to schedule
           </div>
         </div>
       </div>
@@ -76,32 +79,37 @@ function JobCard({ job, onDoubleClick }: { job: Job; onDoubleClick: () => void }
 }
 
 export function JobsPanel({ onJobDoubleClick, refreshKey }: JobsPanelProps) {
+  const { user, profile, loading: authLoading } = useAuth();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('All Jobs');
 
   useEffect(() => {
+    let isMounted = true;
     async function loadJobs() {
+      if (!user || !profile) return;
       try {
-        const data = await jobService.fetchJobs();
-        setJobs(data);
+        const data = await jobService.fetchJobs({
+          role: profile.role,
+          userId: user.id
+        });
+        if (isMounted) setJobs(data);
       } catch (error) {
         console.error('Failed to load jobs');
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     }
-    loadJobs();
-  }, [refreshKey]);
+    if (!authLoading) loadJobs();
+    return () => { isMounted = false; };
+  }, [refreshKey, user, profile, authLoading]);
 
   const filteredJobs = jobs.filter(j => {
-    // Status filter
     if (filter === 'Quotes' && !['Quote', 'Quote Sent', 'Lead'].includes(j.status)) return false;
     if (filter === 'Work Orders' && j.status !== 'Work Order') return false;
     if (filter === 'Completed' && j.status !== 'Completed') return false;
 
-    // Search filter
     if (search) {
       const q = search.toLowerCase();
       return (
@@ -109,60 +117,69 @@ export function JobsPanel({ onJobDoubleClick, refreshKey }: JobsPanelProps) {
         j.client?.first_name.toLowerCase().includes(q) ||
         j.client?.last_name.toLowerCase().includes(q) ||
         j.address.toLowerCase().includes(q) ||
-        j.description.toLowerCase().includes(q)
+        (j.description && j.description.toLowerCase().includes(q))
       );
     }
     return true;
   });
 
   return (
-    <div className="w-[280px] bg-white border-l border-light-gray flex flex-col shrink-0 h-full">
+    <div className="w-full lg:w-[300px] bg-white lg:border-l border-light-gray flex flex-col shrink-0 h-full overflow-hidden">
       {/* Header */}
-      <div className="px-3 py-2.5 border-b border-light-gray shrink-0">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-semibold text-charcoal">Jobs</h3>
-          <span className="text-[10px] text-mid-gray">{filteredJobs.length} jobs</span>
+      <div className="px-4 py-3 border-b border-light-gray shrink-0 bg-white/50 backdrop-blur-sm">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-xs font-black uppercase tracking-widest text-charcoal">Unscheduled Jobs</h3>
+          <span className="text-[10px] font-bold text-vision-green bg-vision-green/10 px-2 py-0.5 rounded-full">{filteredJobs.length}</span>
         </div>
 
-        {/* Filter */}
-        <Select value={filter} onValueChange={(v) => v && setFilter(v)}>
-          <SelectTrigger className="h-8 text-xs bg-off-white border-light-gray mb-2">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All Jobs">All Jobs</SelectItem>
-            <SelectItem value="Quotes">Quotes</SelectItem>
-            <SelectItem value="Work Orders">Work Orders</SelectItem>
-            <SelectItem value="Completed">Completed</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="space-y-2">
+          {/* Filter */}
+          <Select value={filter} onValueChange={(v) => v && setFilter(v)}>
+            <SelectTrigger className="h-9 text-xs bg-off-white border-light-gray/60 shadow-sm font-medium">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All Jobs">All Types</SelectItem>
+              <SelectItem value="Quotes">Quotes & Leads</SelectItem>
+              <SelectItem value="Work Orders">Work Orders</SelectItem>
+              <SelectItem value="Completed">Completed</SelectItem>
+            </SelectContent>
+          </Select>
 
-        {/* Search */}
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-mid-gray" />
-          <Input
-            id="jobs-panel-search"
-            placeholder="Job Search..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-8 pr-7 h-8 text-xs bg-off-white border-light-gray"
-          />
-          {search && (
-            <button
-              onClick={() => setSearch('')}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-mid-gray hover:text-charcoal"
-            >
-              <X className="w-3 h-3" />
-            </button>
-          )}
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-mid-gray" />
+            <Input
+              id="jobs-panel-search"
+              placeholder="Search by name, address..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 pr-8 h-9 text-xs bg-off-white border-light-gray/60 shadow-sm focus-visible:ring-vision-green/20"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-mid-gray hover:text-charcoal transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Job Cards */}
-      <div className="flex-1 overflow-y-auto">
-        {filteredJobs.length === 0 ? (
-          <div className="text-center py-10 px-4">
-            <p className="text-xs text-mid-gray">No jobs match your search</p>
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-24 lg:pb-4">
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 text-vision-green animate-spin" />
+          </div>
+        ) : filteredJobs.length === 0 ? (
+          <div className="text-center py-12 px-6">
+            <div className="w-12 h-12 rounded-full bg-off-white flex items-center justify-center mx-auto mb-3">
+              <Search className="w-5 h-5 text-mid-gray/40" />
+            </div>
+            <p className="text-xs font-bold text-mid-gray">No matching jobs found</p>
           </div>
         ) : (
           filteredJobs.map(job => (

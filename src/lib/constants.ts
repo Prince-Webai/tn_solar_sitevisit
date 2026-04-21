@@ -1,4 +1,4 @@
-// VisionSolar Brand Colors
+// TN Solar Brand Colors
 export const COLORS = {
   visionGreen: '#5C8F5A',
   greenLight: '#7BAE79',
@@ -19,14 +19,11 @@ export const COLORS = {
 // Job Statuses
 export const JOB_STATUSES = {
   LEAD: 'Lead',
-  QUOTE: 'Quote',
-  QUOTE_SENT: 'Quote Sent',
+  SITE_VISIT: 'Site Visit',
   WORK_ORDER: 'Work Order',
-  IN_PROGRESS: 'In Progress',
   COMPLETED: 'Completed',
   CANCELLED: 'Cancelled',
   UNSUCCESSFUL: 'Unsuccessful',
-  ARCHIVED: 'Archived',
 } as const;
 
 export type JobStatus = (typeof JOB_STATUSES)[keyof typeof JOB_STATUSES];
@@ -104,8 +101,8 @@ export const WEATHER_THRESHOLDS = {
   WIND_SPEED: 25, // km/h
 } as const;
 
-// Melbourne coordinates
-export const MELBOURNE_COORDS = {
-  lat: -37.8136,
-  lng: 144.9631,
+// Chennai coordinates
+export const DEFAULT_COORDS = {
+  lat: 13.0827,
+  lng: 80.2707,
 } as const;

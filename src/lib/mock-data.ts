@@ -11,19 +11,19 @@ export const mockProfiles: Profile[] = [
 
 // ──── Clients ────
 export const mockClients: Client[] = [
-  { id: 'c1', first_name: 'Michael', last_name: 'Thompson', email: 'michael.t@email.com', phone: '03 9876 5432', mobile: '0412 345 678', address: '42 Lonsdale St, Melbourne VIC 3000', created_at: '2026-01-15T08:00:00Z' },
-  { id: 'c2', first_name: 'Emma', last_name: 'Rodriguez', email: 'emma.r@email.com', phone: '03 9123 4567', mobile: '0423 456 789', address: '15 Chapel St, South Yarra VIC 3141', created_at: '2026-02-03T09:30:00Z' },
-  { id: 'c3', first_name: 'David', last_name: 'Wilson', email: 'david.w@email.com', phone: '03 9234 5678', mobile: '0434 567 890', address: '88 Bridge Rd, Richmond VIC 3121', created_at: '2026-02-20T14:00:00Z' },
-  { id: 'c4', first_name: 'Jennifer', last_name: 'Patel', email: 'jen.patel@email.com', phone: '03 9345 6789', mobile: '0445 678 901', address: '23 High St, Kew VIC 3101', created_at: '2026-03-01T10:15:00Z' },
-  { id: 'c5', first_name: 'Robert', last_name: 'Chang', email: 'r.chang@email.com', phone: '03 9456 7890', mobile: '0456 789 012', address: '7 Station St, Box Hill VIC 3128', created_at: '2026-03-10T11:00:00Z' },
-  { id: 'c6', first_name: 'Kate', last_name: 'O\'Brien', email: 'kate.ob@email.com', phone: '03 9567 8901', mobile: '0467 890 123', address: '56 Main Rd, Eltham VIC 3095', created_at: '2026-03-15T16:00:00Z' },
+  { id: 'c1', first_name: 'Michael', last_name: 'Thompson', email: 'michael.t@email.com', phone: '044 9876 5432', mobile: '98765 43210', address: '42 Anna Salai, Chennai TN 600002', created_at: '2026-01-15T08:00:00Z' },
+  { id: 'c2', first_name: 'Emma', last_name: 'Rodriguez', email: 'emma.r@email.com', phone: '044 9123 4567', mobile: '98765 43211', address: '15 T. Nagar, Chennai TN 600017', created_at: '2026-02-03T09:30:00Z' },
+  { id: 'c3', first_name: 'David', last_name: 'Wilson', email: 'david.w@email.com', phone: '044 9234 5678', mobile: '98765 43212', address: '88 Adyar, Chennai TN 600020', created_at: '2026-02-20T14:00:00Z' },
+  { id: 'c4', first_name: 'Jennifer', last_name: 'Patel', email: 'jen.patel@email.com', phone: '044 9345 6789', mobile: '98765 43213', address: '23 Velachery, Chennai TN 600042', created_at: '2026-03-01T10:15:00Z' },
+  { id: 'c5', first_name: 'Robert', last_name: 'Chang', email: 'r.chang@email.com', phone: '044 9456 7890', mobile: '98765 43214', address: '7 OMR, Chennai TN 600119', created_at: '2026-03-10T11:00:00Z' },
+  { id: 'c6', first_name: 'Kate', last_name: 'O\'Brien', email: 'kate.ob@email.com', phone: '044 9567 8901', mobile: '98765 43215', address: '56 ECR, Chennai TN 600115', created_at: '2026-03-15T16:00:00Z' },
 ];
 
 // ──── Jobs ────
 export const mockJobs: Job[] = [
   {
     id: 'j1', job_number: 'VS-1201', client_id: 'c1', client: mockClients[0],
-    address: '42 Lonsdale St, Melbourne VIC 3000', suburb: 'Melbourne',
+    address: '42 Anna Salai, Chennai TN 600002', suburb: 'Chennai',
     status: 'Work Order', category: 'Installation',
     description: '6.6kW solar panel system installation - 16x Trina Vertex S panels with Fronius Primo inverter',
     scheduled_date: new Date().toISOString().split('T')[0],
@@ -34,7 +34,7 @@ export const mockJobs: Job[] = [
   },
   {
     id: 'j2', job_number: 'VS-1202', client_id: 'c2', client: mockClients[1],
-    address: '15 Chapel St, South Yarra VIC 3141', suburb: 'South Yarra',
+    address: '15 T. Nagar, Chennai TN 600017', suburb: 'T. Nagar',
     status: 'Quote Sent', category: 'Installation',
     description: '10kW commercial solar system with battery storage - SolarEdge inverter with Tesla Powerwall',
     estimated_hours: 8, system_size: '10kW', materials_status: 'Pending',
@@ -44,7 +44,7 @@ export const mockJobs: Job[] = [
   },
   {
     id: 'j3', job_number: 'VS-1203', client_id: 'c3', client: mockClients[2],
-    address: '88 Bridge Rd, Richmond VIC 3121', suburb: 'Richmond',
+    address: '88 Adyar, Chennai TN 600020', suburb: 'Adyar',
     status: 'Lead', category: 'Site Assessment', requires_site_visit: true,
     description: 'Roof assessment for potential 5kW residential installation - check shading and structural integrity',
     estimated_hours: 2, materials_status: 'N/A',
@@ -53,7 +53,7 @@ export const mockJobs: Job[] = [
   },
   {
     id: 'j4', job_number: 'VS-1204', client_id: 'c4', client: mockClients[3],
-    address: '23 High St, Kew VIC 3101', suburb: 'Kew',
+    address: '23 Velachery, Chennai TN 600042', suburb: 'Velachery',
     status: 'Work Order', category: 'Installation',
     description: '8.8kW solar panel system with micro-inverters - 22x Jinko Tiger Neo panels',
     scheduled_date: new Date().toISOString().split('T')[0],
@@ -64,7 +64,7 @@ export const mockJobs: Job[] = [
   },
   {
     id: 'j5', job_number: 'VS-1205', client_id: 'c5', client: mockClients[4],
-    address: '7 Station St, Box Hill VIC 3128', suburb: 'Box Hill',
+    address: '7 OMR, Chennai TN 600119', suburb: 'OMR',
     status: 'Quote', category: 'Installation',
     description: '5kW residential solar system - budget-friendly option with Canadian Solar panels',
     estimated_hours: 5, system_size: '5kW', materials_status: 'Pending',
@@ -74,7 +74,7 @@ export const mockJobs: Job[] = [
   },
   {
     id: 'j6', job_number: 'VS-1206', client_id: 'c6', client: mockClients[5],
-    address: '56 Main Rd, Eltham VIC 3095', suburb: 'Eltham',
+    address: '56 ECR, Chennai TN 600115', suburb: 'ECR',
     status: 'Completed', category: 'Installation',
     description: '13.2kW solar panel system with 2x Tesla Powerwall batteries - premium installation',
     scheduled_date: '2026-04-16', completed_date: '2026-04-16',
@@ -85,7 +85,7 @@ export const mockJobs: Job[] = [
   },
   {
     id: 'j7', job_number: 'VS-1198', client_id: 'c1', client: mockClients[0],
-    address: '42 Lonsdale St, Melbourne VIC 3000', suburb: 'Melbourne',
+    address: '42 Anna Salai, Chennai TN 600002', suburb: 'Chennai',
     status: 'Completed', category: 'Service',
     description: 'Annual inverter service and panel cleaning - Fronius Primo 5.0 check',
     scheduled_date: '2026-04-10', completed_date: '2026-04-10',
@@ -96,7 +96,7 @@ export const mockJobs: Job[] = [
   },
   {
     id: 'j8', job_number: 'VS-1199', client_id: 'c3', client: mockClients[2],
-    address: '88 Bridge Rd, Richmond VIC 3121', suburb: 'Richmond',
+    address: '88 Adyar, Chennai TN 600020', suburb: 'Adyar',
     status: 'Completed', category: 'Service',
     description: 'Emergency inverter fault diagnosis - SolarEdge SE7K showing ground fault error',
     scheduled_date: '2026-04-12', completed_date: '2026-04-12',
@@ -127,9 +127,9 @@ export const mockChecklist: ChecklistItem[] = [
 
 // ──── Staff Locations ────
 export const mockStaffLocations: StaffLocation[] = [
-  { id: 'sl1', profile_id: '2', profile: mockProfiles[1], latitude: -37.8136, longitude: 144.9631, updated_at: '2026-04-18T09:30:00Z' },
-  { id: 'sl2', profile_id: '3', profile: mockProfiles[2], latitude: -37.8400, longitude: 144.9900, updated_at: '2026-04-18T09:28:00Z' },
-  { id: 'sl3', profile_id: '4', profile: mockProfiles[3], latitude: -37.7900, longitude: 145.0200, updated_at: '2026-04-18T09:25:00Z' },
+  { id: 'sl1', profile_id: '2', profile: mockProfiles[1], latitude: 13.0827, longitude: 80.2707, updated_at: '2026-04-18T09:30:00Z' },
+  { id: 'sl2', profile_id: '3', profile: mockProfiles[2], latitude: 13.0400, longitude: 80.2300, updated_at: '2026-04-18T09:28:00Z' },
+  { id: 'sl3', profile_id: '4', profile: mockProfiles[3], latitude: 13.1200, longitude: 80.2900, updated_at: '2026-04-18T09:25:00Z' },
 ];
 
 // ──── Audit Logs ────

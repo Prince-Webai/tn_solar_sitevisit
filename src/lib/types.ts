@@ -46,6 +46,8 @@ export interface Job {
   contact_phone?: string;
   billing_same_as_job?: boolean;
   billing_address?: string;
+  latitude?: number;
+  longitude?: number;
   created_at: string;
   updated_at: string;
 }

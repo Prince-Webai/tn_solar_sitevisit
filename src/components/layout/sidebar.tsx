@@ -3,73 +3,71 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   MapPin,
   Clock,
+  Settings,
   ChevronLeft,
   ChevronRight,
   LogOut,
-
 } from 'lucide-react';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
-import { mockProfiles } from '@/lib/mock-data';
-import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/providers/auth-provider';
 
-const navItems = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Dispatch Board', href: '/dispatch', icon: MapPin },
-  { label: 'History', href: '/history', icon: Clock },
+const ALL_NAV_ITEMS = [
+  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['Admin', 'Dispatcher', 'Sales', 'Engineer'] },
+  { label: 'Dispatch Board', href: '/dispatch', icon: MapPin, roles: ['Admin', 'Dispatcher', 'Sales', 'Engineer'] },
+  { label: 'Settings', href: '/settings', icon: Settings, roles: ['Admin', 'Dispatcher'] },
+  { label: 'History', href: '/history', icon: Clock, roles: ['Admin', 'Dispatcher', 'Sales', 'Engineer'] },
 ];
 
-const currentUser = mockProfiles[0]; // Rahul Mandal (Admin)
-
-export function Sidebar() {
+export function Sidebar({ className, onItemClick }: { className?: string; onItemClick?: () => void }) {
   const pathname = usePathname();
-  const router = useRouter();
+  const { profile, signOut } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
 
-  const handleLogout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push('/login');
-    router.refresh();
-  };
+  const navItems = ALL_NAV_ITEMS.filter(item => 
+    !profile || item.roles.includes(profile.role)
+  );
 
   return (
     <aside
       className={`
-        relative flex flex-col h-full bg-white border-r border-light-gray
+        relative flex flex-col h-full bg-white
         transition-all duration-300 ease-in-out shrink-0
-        ${collapsed ? 'w-[68px]' : 'w-[240px]'}
+        ${collapsed ? 'md:w-[68px]' : 'md:w-[240px] w-full'}
+        ${className || ''}
       `}
     >
       {/* Logo */}
-      <div className="flex items-center px-4 h-16 shrink-0 overflow-visible">
+      <div className="flex items-center justify-center h-20 shrink-0 px-4">
         {collapsed ? (
-          <div className="flex items-center justify-center w-full">
+          <div className="flex items-center justify-center w-full transition-transform duration-300 hover:scale-110">
             <Image
-              src="/images/logo-icon.svg"
-              alt="VisionSolar"
-              width={32}
-              height={32}
-              className="shrink-0"
+              src="/logo.png"
+              alt="TN Solar"
+              width={36}
+              height={36}
+              className="shrink-0 object-contain"
               priority
             />
           </div>
         ) : (
-          <Image
-            src="/images/logo.svg"
-            alt="VisionSolar"
-            width={170}
-            height={42}
-            className="shrink-0 animate-fade-in"
-            priority
-          />
+          <div className="flex items-center justify-center w-full h-full px-2">
+            <Image
+              src="/logo.png"
+              alt="TN Solar"
+              width={180}
+              height={50}
+              className="shrink-0 animate-fade-in object-contain w-auto h-12 max-h-full"
+              priority
+            />
+          </div>
         )}
       </div>
 
@@ -84,6 +82,7 @@ export function Sidebar() {
           const linkContent = (
             <Link
               href={item.href}
+              onClick={() => onItemClick?.()}
               className={`
                 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
                 transition-all duration-200 group relative
@@ -106,7 +105,7 @@ export function Sidebar() {
           if (collapsed) {
             return (
               <Tooltip key={item.href}>
-                <TooltipTrigger className="w-full">{linkContent}</TooltipTrigger>
+                <TooltipTrigger render={linkContent} />
                 <TooltipContent side="right" className="font-medium">
                   {item.label}
                 </TooltipContent>
@@ -137,22 +136,24 @@ export function Sidebar() {
         <div className={`flex items-center ${collapsed ? 'flex-col gap-2' : 'gap-3'}`}>
           <Avatar className="w-9 h-9 shrink-0 border-2 border-green-light/30">
             <AvatarFallback className="bg-vision-green text-white text-xs font-semibold">
-              {currentUser.full_name.split(' ').map(n => n[0]).join('')}
+              {profile?.full_name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
             </AvatarFallback>
           </Avatar>
           {!collapsed && (
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-charcoal truncate">{currentUser.full_name}</p>
-              <p className="text-xs text-mid-gray truncate">{currentUser.role}</p>
+              <p className="text-sm font-semibold text-charcoal truncate">{profile?.full_name || 'User'}</p>
+              <p className="text-xs text-mid-gray truncate">{profile?.role || 'Guest'}</p>
             </div>
           )}
           <Tooltip>
-            <TooltipTrigger
-              onClick={handleLogout}
-              className="inline-flex items-center justify-center w-8 h-8 rounded-md text-mid-gray hover:text-destructive hover:bg-red-50 shrink-0 transition-colors"
-            >
-              <LogOut className="w-4 h-4" />
-            </TooltipTrigger>
+            <TooltipTrigger render={
+              <button
+                onClick={signOut}
+                className="inline-flex items-center justify-center w-8 h-8 rounded-md text-mid-gray hover:text-destructive hover:bg-red-50 shrink-0 transition-colors"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            } />
             <TooltipContent side={collapsed ? 'right' : 'top'}>Sign out</TooltipContent>
           </Tooltip>
         </div>

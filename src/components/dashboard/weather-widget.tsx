@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { Cloud, CloudRain, Sun, Wind, AlertTriangle, Thermometer, Droplets } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
-import { WEATHER_THRESHOLDS, MELBOURNE_COORDS } from '@/lib/constants';
+import { WEATHER_THRESHOLDS, DEFAULT_COORDS } from '@/lib/constants';
 import type { WeatherData } from '@/lib/types';
 
 export function WeatherWidget() {
@@ -14,7 +14,7 @@ export function WeatherWidget() {
     async function fetchWeather() {
       try {
         const res = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${MELBOURNE_COORDS.lat}&longitude=${MELBOURNE_COORDS.lng}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=precipitation_probability_max&timezone=Australia%2FSydney&forecast_days=1`
+          `https://api.open-meteo.com/v1/forecast?latitude=${DEFAULT_COORDS.lat}&longitude=${DEFAULT_COORDS.lng}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=precipitation_probability_max&timezone=Asia%2FKolkata&forecast_days=1`
         );
         const data = await res.json();
         const current = data.current;

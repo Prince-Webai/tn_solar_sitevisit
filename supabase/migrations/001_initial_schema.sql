@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS public.jobs (
   category TEXT CHECK (category IN ('Installation', 'Service', 'Site Assessment')),
   description TEXT,
   po_number TEXT,
-  scheduled_date DATE,
+  scheduled_date TIMESTAMPTZ,
   completed_date DATE,
   estimated_hours NUMERIC(5,2),
   system_size TEXT,

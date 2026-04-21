@@ -1,21 +1,31 @@
 'use client';
 
-import { useState } from 'react';
-import { Search, Clock, MapPin, GripVertical } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Search, Clock, MapPin, GripVertical, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { mockJobs } from '@/lib/mock-data';
+import { jobService } from '@/lib/supabase/service';
+import { useAuth } from '@/components/providers/auth-provider';
 import type { Job } from '@/lib/types';
 
 function JobCard({ job }: { job: Job }) {
-  const isQuoteType = ['Quote', 'Quote Sent', 'Lead', 'Site Assessment'].includes(job.status) ||
+  const isQuoteType =
+    ['Quote', 'Quote Sent', 'Lead', 'Site Assessment'].includes(job.status) ||
     job.category === 'Site Assessment';
   const borderColor = isQuoteType ? 'border-l-solar-orange' : 'border-l-blue-500';
 
+  const handleDragStart = (e: React.DragEvent) => {
+    // Set the job ID so the drop target can read it
+    e.dataTransfer.setData('text/plain', job.id); // Standardize on 'text/plain' as used in other components
+    e.dataTransfer.setData('application/job-id', job.id);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
   return (
     <div
-      className={`bg-white rounded-lg border border-light-gray ${borderColor} border-l-[3px] p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-all duration-200 group`}
+      className={`bg-white rounded-lg border border-light-gray ${borderColor} border-l-[3px] p-3 cursor-grab active:cursor-grabbing hover:shadow-md transition-all duration-200 group select-none`}
       draggable
+      onDragStart={handleDragStart}
     >
       <div className="flex items-start gap-2">
         <GripVertical className="w-4 h-4 text-light-gray mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
@@ -36,18 +46,50 @@ function JobCard({ job }: { job: Job }) {
             <MapPin className="w-3 h-3 text-mid-gray shrink-0" />
             <p className="text-xs text-mid-gray truncate">{job.suburb || job.address}</p>
           </div>
-          <p className="text-xs text-dark-gray mt-1.5 line-clamp-2">{job.description.substring(0, 50)}...</p>
+          {job.description && (
+            <p className="text-xs text-dark-gray mt-1.5 line-clamp-2">
+              {job.description.substring(0, 60)}{job.description.length > 60 ? '...' : ''}
+            </p>
+          )}
         </div>
       </div>
     </div>
   );
 }
 
-export function UnscheduledJobs() {
-  const [search, setSearch] = useState('');
+interface UnscheduledJobsProps {
+  refreshKey?: number;
+}
 
-  const unscheduled = mockJobs.filter(j =>
-    !j.scheduled_date &&
+export function UnscheduledJobs({ refreshKey }: UnscheduledJobsProps) {
+  const { user, profile, loading: authLoading } = useAuth();
+  const [search, setSearch]     = useState('');
+  const [allJobs, setAllJobs]   = useState<Job[]>([]);
+  const [loading, setLoading]   = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      if (!user || !profile) return;
+      setLoading(true);
+      try {
+        const data = await jobService.fetchJobs({
+          role: profile.role,
+          userId: user.id
+        });
+        setAllJobs(data);
+      } catch (err) {
+        console.error('Failed to load jobs:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (!authLoading) load();
+  }, [refreshKey, user, profile, authLoading]);
+
+  // Unscheduled = no assigned_to OR no scheduled_date, and not completed/cancelled
+  // For Engineers, they only see jobs assigned to them, so "Unscheduled" would be jobs assigned but not dated
+  const unscheduled = allJobs.filter(j =>
+    (!j.assigned_to || !j.scheduled_date) &&
     !['Completed', 'Cancelled', 'Archived'].includes(j.status)
   );
 
@@ -56,11 +98,13 @@ export function UnscheduledJobs() {
     const q = search.toLowerCase();
     return (
       j.job_number.toLowerCase().includes(q) ||
-      j.client?.first_name.toLowerCase().includes(q) ||
-      j.client?.last_name.toLowerCase().includes(q) ||
+      (j.client?.first_name?.toLowerCase() ?? '').includes(q) ||
+      (j.client?.last_name?.toLowerCase() ?? '').includes(q) ||
       j.address.toLowerCase().includes(q)
     );
   });
+
+  if (authLoading) return null;
 
   return (
     <div className="w-80 bg-white border-r border-light-gray flex flex-col shrink-0 h-full">
@@ -76,13 +120,20 @@ export function UnscheduledJobs() {
             className="pl-9 h-9 text-sm bg-off-white border-light-gray"
           />
         </div>
-        <p className="text-xs text-mid-gray mt-2">{filtered.length} job{filtered.length !== 1 ? 's' : ''} unscheduled</p>
+        <p className="text-xs text-mid-gray mt-2">
+          {loading ? 'Loading...' : `${filtered.length} job${filtered.length !== 1 ? 's' : ''} unscheduled`}
+        </p>
       </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
-        {filtered.length === 0 ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 text-vision-green animate-spin" />
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="text-center py-10">
-            <p className="text-sm text-mid-gray">No unscheduled jobs found</p>
+            <p className="text-sm text-mid-gray">No unscheduled jobs</p>
+            <p className="text-xs text-mid-gray mt-1">All jobs have been allocated!</p>
           </div>
         ) : (
           filtered.map(job => <JobCard key={job.id} job={job} />)

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,11 +10,30 @@ const inter = Inter({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "VisionSolar Job Manager",
-  description: "Smart field service management for solar installation and servicing. Manage jobs, dispatch teams, and track your VisionSolar operations.",
-  keywords: ["solar", "field service", "job management", "VisionSolar", "dispatch"],
+export const viewport: Viewport = {
+  themeColor: "#284a7e",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
+
+export const metadata: Metadata = {
+  title: "TN Solar | Site Visit Manager",
+  description: "Bilingual Solar Site Visit & Job Management System",
+  applicationName: "TN Solar",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "TN Solar",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+};
+
+import { I18nProvider } from "@/components/providers/i18n-provider";
+import { AuthProvider } from "@/components/providers/auth-provider";
 
 export default function RootLayout({
   children,
@@ -24,9 +43,13 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full font-sans">
-        <TooltipProvider delay={300}>
-          {children}
-        </TooltipProvider>
+        <I18nProvider>
+          <AuthProvider>
+            <TooltipProvider delay={300}>
+              {children}
+            </TooltipProvider>
+          </AuthProvider>
+        </I18nProvider>
         <Toaster position="top-right" richColors closeButton />
       </body>
     </html>
