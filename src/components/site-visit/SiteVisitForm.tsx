@@ -23,6 +23,7 @@ import { PhotoInput } from './PhotoInput';
 import { VideoInput } from './VideoInput';
 import { createClient } from '@/lib/supabase/client';
 import { siteVisitService } from '@/lib/supabase/site-visit-service';
+import { jobService } from '@/lib/supabase/service';
 import type { SiteVisitData } from '@/types/site-visit';
 import { Loader2 } from 'lucide-react';
 import { useEffect } from 'react';
@@ -56,23 +57,34 @@ export function SiteVisitForm({ jobId }: { jobId?: string }) {
   const { watch, setValue, handleSubmit, reset, formState: { errors } } = methods;
 
   useEffect(() => {
-    async function loadExistingData() {
+    async function loadData() {
       if (!jobId) return;
       try {
+        // 1. Try to load existing site visit
         const existingData = await siteVisitService.fetchByJobId(jobId);
         if (existingData) {
           reset(existingData);
-          if (existingData.signature) {
-            // signatureRef doesn't support setting value directly from URL easily 
-            // but we can store it in the state and display it
+          return;
+        }
+
+        // 2. If no site visit yet, pre-fill from job/client data
+        const job = await jobService.fetchJobById(jobId);
+        if (job) {
+          setValue('clientName', `${job.client?.first_name || ''} ${job.client?.last_name || ''}`.trim() || 'Valued Client');
+          setValue('clientPhone', job.client?.phone || job.client?.mobile || '');
+          setValue('siteAddress', job.address || '');
+          
+          // Also pre-fill GPS if job has it
+          if (job.latitude && job.longitude) {
+            setValue('siteGps', { lat: Number(job.latitude), lng: Number(job.longitude) });
           }
         }
       } catch (error) {
-        console.error('Failed to load existing site visit:', error);
+        console.error('Failed to load site visit or job data:', error);
       }
     }
-    loadExistingData();
-  }, [jobId, reset]);
+    loadData();
+  }, [jobId, reset, setValue]);
 
   const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 6));
   const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
@@ -98,9 +110,9 @@ export function SiteVisitForm({ jobId }: { jobId?: string }) {
       });
 
       toast.success('Site visit submitted successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Submission error:', error);
-      toast.error('Failed to submit site visit.');
+      toast.error(error.message || 'Failed to submit site visit. Please check your connection and try again.');
     } finally {
       setIsSubmitting(false);
     }
