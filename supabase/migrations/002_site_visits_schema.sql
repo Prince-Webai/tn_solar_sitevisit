@@ -1,4 +1,4 @@
--- VisionSolar - Site Visit Form Schema
+-- TN Solar - Site Visit Form Schema
 -- Run this in the Supabase SQL Editor
 
 -- 1. Update profiles role enum

@@ -1,4 +1,4 @@
--- Seed data for VisionSolar
+-- Seed data for TN Solar
 -- Run this in the Supabase SQL Editor
 
 -- 1. Insert some Clients
@@ -13,7 +13,7 @@ VALUES
 -- Note: Using subqueries to get the client IDs
 INSERT INTO public.jobs (job_number, client_id, address, suburb, status, category, description, estimated_hours, total_value)
 SELECT 
-  'VS-1201', 
+  'TN-1201', 
   id, 
   '42 Lonsdale St, Melbourne VIC 3000', 
   'Melbourne', 
@@ -26,7 +26,7 @@ FROM public.clients WHERE first_name = 'Michael' AND last_name = 'Thompson' LIMI
 
 INSERT INTO public.jobs (job_number, client_id, address, suburb, status, category, description, estimated_hours, total_value)
 SELECT 
-  'VS-1202', 
+  'TN-1202', 
   id, 
   '15 Chapel St, South Yarra VIC 3141', 
   'South Yarra', 
@@ -39,7 +39,7 @@ FROM public.clients WHERE first_name = 'Emma' AND last_name = 'Rodriguez' LIMIT 
 
 INSERT INTO public.jobs (job_number, client_id, address, suburb, status, category, description, estimated_hours, total_value)
 SELECT 
-  'VS-1203', 
+  'TN-1203', 
   id, 
   '88 Bridge Rd, Richmond VIC 3121', 
   'Richmond', 

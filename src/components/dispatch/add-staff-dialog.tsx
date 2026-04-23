@@ -100,7 +100,7 @@ export function AddStaffDialog({ open, onOpenChange, onSuccess }: AddStaffDialog
             <Input 
               id="staff-email" 
               type="email" 
-              placeholder="john@visionsolar.com" 
+              placeholder="john@tnsolar.com" 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

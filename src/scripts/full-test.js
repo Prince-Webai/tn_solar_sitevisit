@@ -47,15 +47,15 @@ async function post(path, body, headers = HDR_S) {
 // ══ MAIN ══════════════════════════════════════════════════════════════════════
 async function main() {
   console.log('═══════════════════════════════════════════════');
-  console.log('  VisionSolar — Full Integration Test Script  ');
+  console.log('  TN Solar — Full Integration Test Script  ');
   console.log('═══════════════════════════════════════════════\n');
 
   // ── TEST 1: Verify all 3 logins ──────────────────────────────────────────────
   console.log('① TESTING ALL 3 LOGINS\n');
   const creds = [
-    { email:'admin@visionsolar.com',    password:'Admin123!'    },
-    { email:'sales@visionsolar.com',    password:'Sales123!'    },
-    { email:'engineer@visionsolar.com', password:'Engineer123!' },
+    { email:'admin@tnsolar.com',    password:'Admin123!'    },
+    { email:'sales@tnsolar.com',    password:'Sales123!'    },
+    { email:'engineer@tnsolar.com', password:'Engineer123!' },
   ];
 
   let engineerId = null;
@@ -132,14 +132,14 @@ async function main() {
   console.log('═══════════════════════════════════════════════');
   console.log('  Open: http://localhost:3000/login\n');
   console.log('  🔴 Admin login:');
-  console.log('     admin@visionsolar.com / Admin123!');
+  console.log('     admin@tnsolar.com / Admin123!');
   console.log('     → Should see: Dashboard, Dispatch Board, New Site Visit, History');
   console.log('     → Go to Dispatch Board → job JOB-001 should appear\n');
   console.log('  🟠 Sales login:');
-  console.log('     sales@visionsolar.com / Sales123!');
+  console.log('     sales@tnsolar.com / Sales123!');
   console.log('     → Should see: Dashboard, New Site Visit ONLY\n');
   console.log('  🟢 Engineer login:');
-  console.log('     engineer@visionsolar.com / Engineer123!');
+  console.log('     engineer@tnsolar.com / Engineer123!');
   console.log('     → Should see: Dashboard, New Site Visit, History');
   console.log('     → JOB-001 should appear as assigned to this engineer');
   console.log('═══════════════════════════════════════════════\n');

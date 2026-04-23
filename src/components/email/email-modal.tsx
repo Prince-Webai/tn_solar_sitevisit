@@ -26,15 +26,15 @@ interface Attachment {
 }
 
 export function EmailModal({ open, onOpenChange, to = '', subject = '', jobNumber, clientName }: EmailModalProps) {
-  const defaultSubject = subject || `VisionSolar Quote #${jobNumber || '0000'} for ${clientName || 'Client'}`;
+  const defaultSubject = subject || `TN Solar Quote #${jobNumber || '0000'} for ${clientName || 'Client'}`;
 
   const [emailTo, setEmailTo] = useState(to);
   const [emailSubject, setEmailSubject] = useState(defaultSubject);
   const [emailBody, setEmailBody] = useState(
-    `Hi ${clientName || 'there'},\n\nPlease find your quote attached. You can also view it online at the link below:\n\n{{quote_link}}\n\nIf you have any questions, please don't hesitate to reach out.\n\nKind regards,\nVisionSolar Team`
+    `Hi ${clientName || 'there'},\n\nPlease find your quote attached. You can also view it online at the link below:\n\n{{quote_link}}\n\nIf you have any questions, please don't hesitate to reach out.\n\nKind regards,\nTN Solar Team`
   );
   const [attachments, setAttachments] = useState<Attachment[]>([
-    { name: `Quote_${jobNumber || 'VS-0000'}.pdf`, type: 'application/pdf', size: 245000 },
+    { name: `Quote_${jobNumber || 'TN-0000'}.pdf`, type: 'application/pdf', size: 245000 },
   ]);
   const [sending, setSending] = useState(false);
 

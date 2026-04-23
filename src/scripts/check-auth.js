@@ -25,9 +25,9 @@ async function testLogin(email, password) {
 
 async function main() {
   const USERS = [
-    { email: 'admin@visionsolar.com',    password: 'Admin123!'    },
-    { email: 'sales@visionsolar.com',    password: 'Sales123!'    },
-    { email: 'engineer@visionsolar.com', password: 'Engineer123!' },
+    { email: 'admin@tnsolar.com',    password: 'Admin123!'    },
+    { email: 'sales@tnsolar.com',    password: 'Sales123!'    },
+    { email: 'engineer@tnsolar.com', password: 'Engineer123!' },
   ];
 
   console.log('🧪 Testing all 3 logins...\n');

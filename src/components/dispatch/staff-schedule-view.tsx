@@ -80,7 +80,7 @@ export function StaffScheduleView({ onJobClick, refreshKey, onScheduleUpdate }: 
           userId: user.id
         });
         
-        let profilesQuery = supabase.from('profiles').select('*').in('role', ['Technician', 'Engineer']);
+        let profilesQuery = supabase.from('profiles').select('*').in('role', ['Technician', 'Engineer', 'Sales', 'Dispatcher']);
         
         if (profile.role === 'Engineer' || profile.role === 'Technician') {
           profilesQuery = profilesQuery.eq('id', user.id);

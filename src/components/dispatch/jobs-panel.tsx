@@ -55,7 +55,7 @@ function JobCard({ job, onDoubleClick }: { job: Job; onDoubleClick: () => void }
             <p className="text-sm font-bold text-charcoal truncate">
               {job.client?.first_name} {job.client?.last_name}
             </p>
-            <span className="text-[10px] text-mid-gray font-bold ml-2 shrink-0">#{job.job_number.replace('VS-', '')}</span>
+            <span className="text-[10px] text-mid-gray font-bold ml-2 shrink-0">#{job.job_number.replace('TN-', '')}</span>
           </div>
           <div className="flex items-center gap-1 mt-0.5">
             <MapPin className="w-3 h-3 text-mid-gray/60 shrink-0" />

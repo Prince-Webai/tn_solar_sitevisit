@@ -7,7 +7,7 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function createTestUser() {
-  const email = 'test@visionsolar.com';
+  const email = 'test@tnsolar.com';
   const password = 'Password123!';
 
   console.log(`Attempting to sign up ${email}...`);
