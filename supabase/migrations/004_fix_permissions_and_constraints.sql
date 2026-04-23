@@ -11,10 +11,15 @@ BEGIN
 END $$;
 
 -- Fix circular RLS on profiles:
--- First, drop the old policy
+-- First, drop ALL possible old and new policy names to be safe
 DROP POLICY IF EXISTS "Admin/Dispatcher full access profiles" ON public.profiles;
 DROP POLICY IF EXISTS "Technician read own profile" ON public.profiles;
 DROP POLICY IF EXISTS "Authenticated read profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Profiles are readable by all authenticated users" ON public.profiles;
+DROP POLICY IF EXISTS "Users can update their own profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Admins have full access to all profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Admins full access to profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Admins mutations profiles" ON public.profiles;
 
 -- New non-circular policies
 CREATE POLICY "Profiles are readable by all authenticated users" ON public.profiles
@@ -23,23 +28,28 @@ CREATE POLICY "Profiles are readable by all authenticated users" ON public.profi
 CREATE POLICY "Users can update their own profiles" ON public.profiles
   FOR UPDATE USING (auth.uid() = id);
 
-CREATE POLICY "Admins have full access to all profiles" ON public.profiles
-  FOR ALL USING (
+-- Admin policy for mutations (INSERT, UPDATE, DELETE)
+-- Explicitly NOT FOR SELECT to avoid recursion
+CREATE POLICY "Admins mutations profiles" ON public.profiles
+  FOR INSERT, UPDATE, DELETE
+  WITH CHECK (
     (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('Admin', 'Dispatcher')
   );
--- Note: The Admin policy above still has a subquery, but Postgres handles this one better.
--- However, for absolute safety, we can use the service role for admin actions (which we do in staff.ts).
 
 -- 2. site_visits policies
--- Drop existing restricted policies to recreate them more comprehensively
+-- Drop existing policies to recreate them safely
 DROP POLICY IF EXISTS "Admins can view all site visits" ON public.site_visits;
 DROP POLICY IF EXISTS "Engineers can view own site visits" ON public.site_visits;
 DROP POLICY IF EXISTS "Engineers can create site visits" ON public.site_visits;
+DROP POLICY IF EXISTS "Admins full access site visits" ON public.site_visits;
+DROP POLICY IF EXISTS "Staff view own site visits" ON public.site_visits;
+DROP POLICY IF EXISTS "Staff insert own site visits" ON public.site_visits;
+DROP POLICY IF EXISTS "Staff update own site visits" ON public.site_visits;
 
 -- Admin/Dispatcher: Full Access
 CREATE POLICY "Admins full access site visits" ON public.site_visits
   FOR ALL USING (
-    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('Admin', 'Dispatcher'))
+    (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('Admin', 'Dispatcher')
   );
 
 -- Engineers/Technicians/Sales: View and Upsert their own
@@ -55,6 +65,7 @@ CREATE POLICY "Staff update own site visits" ON public.site_visits
 
 -- 3. Ensure jobs can be updated by staff assigned to them (for GPS sync)
 DROP POLICY IF EXISTS "Engineer update assigned jobs" ON public.jobs;
+DROP POLICY IF EXISTS "Staff update assigned jobs" ON public.jobs;
 CREATE POLICY "Staff update assigned jobs" ON public.jobs
   FOR UPDATE USING (
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('Admin', 'Dispatcher', 'Sales'))
