@@ -27,15 +27,8 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  let session = null;
-  let user = null;
-  try {
-    const { data } = await supabase.auth.getSession();
-    session = data.session;
-    user = session?.user || null;
-  } catch (error) {
-    console.error('Middleware Supabase getSession error:', error);
-  }
+  // Refresh session — important, do not remove
+  const { data: { user } } = await supabase.auth.getUser();
 
   // Public routes that don't require authentication
   const publicRoutes = ['/login', '/api'];

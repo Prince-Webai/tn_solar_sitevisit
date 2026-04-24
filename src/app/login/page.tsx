@@ -45,8 +45,12 @@ export default function LoginPage() {
         return;
       }
 
-      router.push('/dashboard');
-      router.refresh();
+      // Get the redirect URL from search params or default to dashboard
+      const params = new URLSearchParams(window.location.search);
+      const redirectTo = params.get('redirect') || '/dashboard';
+
+      // Use a hard redirect to ensure the session is picked up by middleware correctly on production
+      window.location.href = redirectTo;
     } catch {
       setError('Something went wrong. Please try again.');
     } finally {
