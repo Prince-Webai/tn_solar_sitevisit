@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Camera, X, Loader2, Image as ImageIcon, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
+import imageCompression from 'browser-image-compression';
 
 interface PhotoInputProps {
   label: string;
@@ -25,7 +26,7 @@ export function PhotoInput({ label, onUpload, value, path = 'visits', jobId }: P
   }, [value]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    let file = e.target.files?.[0];
     if (!file) return;
 
     // Show local preview
@@ -34,7 +35,25 @@ export function PhotoInput({ label, onUpload, value, path = 'visits', jobId }: P
     setUploading(true);
 
     try {
-      const fileExt = file.name.split('.').pop();
+      // 1. Image Compression
+      if (file.type.startsWith('image/')) {
+        const options = {
+          maxSizeMB: 0.8, // Target size under 800KB
+          maxWidthOrHeight: 1600, // Reasonable resolution for site assessment
+          useWebWorker: true,
+          fileType: 'image/jpeg' as any
+        };
+        
+        try {
+          const compressedFile = await imageCompression(file, options);
+          // Convert back to file if it returns a blob
+          file = new File([compressedFile], file.name, { type: 'image/jpeg' });
+        } catch (compressionError) {
+          console.error('Compression failed, uploading original:', compressionError);
+        }
+      }
+
+      const fileExt = file.name.split('.').pop() || 'jpg';
       const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
       const folder = jobId ? `jobs/${jobId}/${path}` : `temp/${path}`;
       const filePath = `${folder}/${fileName}`;

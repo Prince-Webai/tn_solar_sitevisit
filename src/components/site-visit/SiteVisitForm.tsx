@@ -48,8 +48,8 @@ export function SiteVisitForm({ jobId, onSuccess }: { jobId?: string, onSuccess?
     defaultValues: {
       photos: {},
       videos: {},
-      solarSpace: { southFacing: false },
-      structure: { lightningArrestor: false, additionalPipe: false },
+      solarSpace: { length: '', width: '', southFacing: false, shape: 'Rectangle' },
+      structure: { lightningArrestor: false, additionalPipe: false, size: 'LOW RAISE' },
       electrical: { inverterLocation: 'Same floor' },
     }
   });
@@ -97,16 +97,39 @@ export function SiteVisitForm({ jobId, onSuccess }: { jobId?: string, onSuccess?
 
     setIsSubmitting(true);
     try {
-      const signatureData = signatureRef.current?.isEmpty() 
-        ? data.signature 
-        : signatureRef.current?.toDataURL();
+      let signatureUrl = data.signature;
+      
+      const signatureCanvas = signatureRef.current;
+      if (signatureCanvas && !signatureCanvas.isEmpty()) {
+        const signatureDataUrl = signatureCanvas.toDataURL('image/png');
+        
+        // Convert data URL to blob
+        const response = await fetch(signatureDataUrl);
+        const blob = await response.blob();
+        const file = new File([blob], `signature-${Date.now()}.png`, { type: 'image/png' });
+
+        const filePath = `jobs/${jobId}/signatures/signature-${Date.now()}.png`;
+        const { error: uploadError } = await supabase.storage
+          .from('site-visits')
+          .upload(filePath, file);
+
+        if (uploadError) {
+          console.error('Error uploading signature:', uploadError);
+          // Fallback to data URL if upload fails, but log it
+        } else {
+          const { data: { publicUrl } } = supabase.storage
+            .from('site-visits')
+            .getPublicUrl(filePath);
+          signatureUrl = publicUrl;
+        }
+      }
       
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('User not authenticated');
 
       await siteVisitService.upsertSiteVisit(jobId, user.id, {
         ...data,
-        signature: signatureData
+        signature: signatureUrl
       });
 
       toast.success('Site visit submitted successfully!');
@@ -197,7 +220,7 @@ export function SiteVisitForm({ jobId, onSuccess }: { jobId?: string, onSuccess?
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-sm font-semibold text-charcoal">{t('no_of_floors')}</label>
-                      <Select onValueChange={(val) => setValue('noOfFloors', val || undefined as any)} value={floors || undefined}>
+                      <Select onValueChange={(val) => setValue('noOfFloors', val || '')} value={floors || ''}>
                         <SelectTrigger><SelectValue placeholder="Select floors" /></SelectTrigger>
                         <SelectContent>
                           {['B+G', 'G', 'G+1', 'G+2', 'G+3', 'G+4', 'Other'].map(v => (
@@ -256,11 +279,11 @@ export function SiteVisitForm({ jobId, onSuccess }: { jobId?: string, onSuccess?
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1.5">
                       <label className="text-sm font-semibold text-charcoal">Length (m)</label>
-                      <Input type="number" {...methods.register('solarSpace.length')} />
+                      <Input type="number" step="0.1" {...methods.register('solarSpace.length', { valueAsNumber: true })} />
                     </div>
                     <div className="space-y-1.5">
                       <label className="text-sm font-semibold text-charcoal">Width (m)</label>
-                      <Input type="number" {...methods.register('solarSpace.width')} />
+                      <Input type="number" step="0.1" {...methods.register('solarSpace.width', { valueAsNumber: true })} />
                     </div>
                   </div>
                   <div className="flex items-center gap-3 p-4 bg-off-white rounded-xl border border-light-gray">

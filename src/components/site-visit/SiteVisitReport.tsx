@@ -102,6 +102,8 @@ export function SiteVisitReport({ data, date }: SiteVisitReportProps) {
                     <img 
                       src={url} 
                       alt={key} 
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
                     />
                   </div>
@@ -190,7 +192,7 @@ export function SiteVisitReport({ data, date }: SiteVisitReportProps) {
               url && (
                 <div key={key} className="space-y-2">
                   <div className="aspect-video relative rounded-lg border border-light-gray bg-black overflow-hidden shadow-md">
-                    <video src={url} controls className="w-full h-full object-contain" />
+                    <video src={url} controls preload="metadata" className="w-full h-full object-contain" />
                   </div>
                   <p className="text-[10px] font-bold text-mid-gray uppercase tracking-tighter">
                     {key.replace(/([A-Z])/g, ' $1').trim()}
@@ -213,7 +215,7 @@ export function SiteVisitReport({ data, date }: SiteVisitReportProps) {
           </CardHeader>
           <CardContent className="p-6 flex flex-col items-center">
             <div className="max-w-md w-full border-2 border-dashed border-light-gray rounded-xl p-4 bg-off-white/30">
-              <img src={data.signature} alt="Client Signature" className="max-h-32 mx-auto" />
+              <img src={data.signature} alt="Client Signature" loading="lazy" decoding="async" className="max-h-32 mx-auto" />
             </div>
             <p className="text-[10px] text-mid-gray mt-4 font-medium italic text-center">
               Digitally signed and verified at the time of site assessment.

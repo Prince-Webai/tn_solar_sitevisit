@@ -2,8 +2,14 @@
   command = "npm run build"
   publish = ".next"
 
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--version"
+
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-[build.environment]
-  NODE_VERSION = "20"
+[functions]
+  node_wrapper = "esbuild"
+  external_node_modules = ["@supabase/supabase-js"]
+
