@@ -99,7 +99,7 @@ export const jobService = {
   /**
    * Update a job's status or other fields
    */
-  async updateJob(jobId: string, updates: Partial<Job>) {
+  async updateJob(jobId: string, updates: Partial<Job>, userId?: string) {
     const supabase = createClient();
     const { data, error } = await supabase
       .from('jobs')
@@ -113,13 +113,24 @@ export const jobService = {
       throw error;
     }
 
+    // Auto-log activity
+    if (userId) {
+      this.logActivity({
+        userId,
+        action: 'job_updated',
+        entityType: 'job',
+        entityId: jobId,
+        details: `Updated job status to ${updates.status || 'current status'}`
+      }).catch(err => console.error('Silent logging failure:', err));
+    }
+
     return data as Job;
   },
 
   /**
    * Assign a job to a staff member and set the schedule date
    */
-  async assignJob(jobId: string, staffId: string, scheduledDate: string) {
+  async assignJob(jobId: string, staffId: string, scheduledDate: string, userId?: string) {
     return this.updateJob(jobId, {
       assigned_to: staffId,
       scheduled_date: scheduledDate,
@@ -129,7 +140,7 @@ export const jobService = {
   /**
    * Create a new job
    */
-  async createJob(job: Omit<Job, 'id' | 'created_at' | 'updated_at' | 'job_number'>) {
+  async createJob(job: Omit<Job, 'id' | 'created_at' | 'updated_at' | 'job_number'>, userId?: string) {
     const supabase = createClient();
     
     // Use the contact phone number as the job number (cleaned of spaces/special chars)
@@ -145,6 +156,17 @@ export const jobService = {
     if (error) {
       console.error('Error creating job:', error);
       throw error;
+    }
+
+    // Auto-log activity
+    if (userId && data) {
+      this.logActivity({
+        userId,
+        action: 'job_created',
+        entityType: 'job',
+        entityId: data.id,
+        details: `Created new Job #${data.job_number} for ${job.contact_name}`
+      }).catch(err => console.error('Silent logging failure:', err));
     }
 
     return data as Job;
