@@ -26,15 +26,15 @@ interface Attachment {
 }
 
 export function EmailModal({ open, onOpenChange, to = '', subject = '', jobNumber, clientName }: EmailModalProps) {
-  const defaultSubject = subject || `VisionSolar Quote #${jobNumber || '0000'} for ${clientName || 'Client'}`;
+  const defaultSubject = subject || `TN Solar Quote #${jobNumber || '0000'} for ${clientName || 'Client'}`;
 
   const [emailTo, setEmailTo] = useState(to);
   const [emailSubject, setEmailSubject] = useState(defaultSubject);
   const [emailBody, setEmailBody] = useState(
-    `Hi ${clientName || 'there'},\n\nPlease find your quote attached. You can also view it online at the link below:\n\n{{quote_link}}\n\nIf you have any questions, please don't hesitate to reach out.\n\nKind regards,\nVisionSolar Team`
+    `Hi ${clientName || 'there'},\n\nPlease find your quote attached. You can also view it online at the link below:\n\n{{quote_link}}\n\nIf you have any questions, please don't hesitate to reach out.\n\nKind regards,\nTN Solar Team`
   );
   const [attachments, setAttachments] = useState<Attachment[]>([
-    { name: `Quote_${jobNumber || 'VS-0000'}.pdf`, type: 'application/pdf', size: 245000 },
+    { name: `Quote_${jobNumber || 'TN-0000'}.pdf`, type: 'application/pdf', size: 245000 },
   ]);
   const [sending, setSending] = useState(false);
 
@@ -89,7 +89,7 @@ export function EmailModal({ open, onOpenChange, to = '', subject = '', jobNumbe
   const fileIcon = (type: string) => {
     if (type.startsWith('image/')) return <Image className="w-4 h-4 text-blue-500" />;
     if (type.startsWith('audio/')) return <Music className="w-4 h-4 text-purple-500" />;
-    return <FileText className="w-4 h-4 text-solar-orange" />;
+    return <FileText className="w-4 h-4 text-secondary" />;
   };
 
   const formatSize = (bytes: number) => {
@@ -153,7 +153,7 @@ export function EmailModal({ open, onOpenChange, to = '', subject = '', jobNumbe
                   accept=".pdf,.png,.jpg,.jpeg,.mp3,.wav"
                   onChange={handleFileUpload}
                 />
-                <span className="text-xs text-vision-green hover:text-green-dark font-medium flex items-center gap-1 transition-colors">
+                <span className="text-xs text-primary hover:text-primary-dark font-medium flex items-center gap-1 transition-colors">
                   <Paperclip className="w-3 h-3" />
                   Attach File
                 </span>
@@ -190,7 +190,7 @@ export function EmailModal({ open, onOpenChange, to = '', subject = '', jobNumbe
           <Button
             onClick={handleSend}
             disabled={sending}
-            className="bg-solar-orange hover:bg-orange-light text-white gap-2 shadow-md shadow-solar-orange/20"
+            className="bg-secondary hover:bg-orange-light text-white gap-2 shadow-md shadow-secondary/20"
           >
             {sending ? (
               <>

@@ -21,7 +21,7 @@ export default function DashboardPage() {
   if (authLoading) {
     return (
       <div className="h-full flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 text-vision-green animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }
@@ -51,7 +51,7 @@ export default function DashboardPage() {
             <Button
               id="dashboard-book-site-visit-btn"
               onClick={() => setBookDialogOpen(true)}
-              className="w-full sm:w-auto bg-vision-green hover:bg-green-dark text-white gap-2 shadow-md shadow-vision-green/20 h-10"
+              className="w-full sm:w-auto bg-primary hover:bg-primary-dark text-white gap-2 shadow-md shadow-primary/20 h-10"
             >
               <Plus className="w-4 h-4" />
               Book Site Visit

@@ -61,7 +61,7 @@ export function BillingTab() {
             id="billing-same-address"
             checked={billingSameAsJob}
             onCheckedChange={(c) => setBillingSameAsJob(c === true)}
-            className="border-light-gray data-[state=checked]:bg-vision-green data-[state=checked]:border-vision-green"
+            className="border-light-gray data-[state=checked]:bg-primary data-[state=checked]:border-primary"
           />
           <label htmlFor="billing-same-address" className="text-sm text-dark-gray cursor-pointer select-none">
             Same as job address
@@ -172,7 +172,7 @@ export function BillingTab() {
           variant="ghost"
           size="sm"
           onClick={addItem}
-          className="text-vision-green hover:text-green-dark hover:bg-accent gap-1.5 h-8"
+          className="text-primary hover:text-primary-dark hover:bg-accent gap-1.5 h-8"
         >
           <Plus className="w-3.5 h-3.5" />
           Add Item
@@ -204,7 +204,7 @@ export function BillingTab() {
       <div className="space-y-3">
         <label className="text-sm font-medium text-charcoal">Actions</label>
         <div className="grid grid-cols-2 gap-2">
-          <Button className="bg-solar-orange hover:bg-orange-light text-white gap-2 h-10 shadow-sm">
+          <Button className="bg-secondary hover:bg-orange-light text-white gap-2 h-10 shadow-sm">
             <Send className="w-4 h-4" />
             Send Quote
           </Button>
@@ -212,7 +212,7 @@ export function BillingTab() {
             <MessageSquare className="w-4 h-4" />
             SMS Quote
           </Button>
-          <Button className="bg-vision-green hover:bg-green-light text-white gap-2 h-10 shadow-sm">
+          <Button className="bg-primary hover:bg-green-light text-white gap-2 h-10 shadow-sm">
             <Check className="w-4 h-4" />
             Accept
           </Button>

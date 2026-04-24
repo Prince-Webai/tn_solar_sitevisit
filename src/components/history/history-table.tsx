@@ -16,7 +16,7 @@ export function HistoryTable({ jobs, page, totalPages, onPageChange }: HistoryTa
   const statusBadge = (status: string) => {
     switch (status) {
       case 'Completed':
-        return <Badge className="bg-vision-green/15 text-green-dark border-0 text-xs">Completed</Badge>;
+        return <Badge className="bg-primary/15 text-primary-dark border-0 text-xs">Completed</Badge>;
       case 'Cancelled':
         return <Badge className="bg-red-100 text-red-700 border-0 text-xs">Cancelled</Badge>;
       case 'Archived':
@@ -30,7 +30,7 @@ export function HistoryTable({ jobs, page, totalPages, onPageChange }: HistoryTa
     switch (status) {
       case 'Paid':
         return (
-          <div className="flex items-center gap-1.5 text-vision-green">
+          <div className="flex items-center gap-1.5 text-primary">
             <CheckCircle2 className="w-4 h-4" />
             <span className="text-xs font-medium">Paid</span>
           </div>
@@ -38,7 +38,7 @@ export function HistoryTable({ jobs, page, totalPages, onPageChange }: HistoryTa
       case 'Unpaid':
       case 'Draft':
         return (
-          <div className="flex items-center gap-1.5 text-solar-orange">
+          <div className="flex items-center gap-1.5 text-secondary">
             <Clock className="w-4 h-4" />
             <span className="text-xs font-medium">{status}</span>
           </div>
@@ -83,7 +83,7 @@ export function HistoryTable({ jobs, page, totalPages, onPageChange }: HistoryTa
                   </span>
                 </td>
                 <td className="px-4 py-3">
-                  <span className="text-sm font-semibold text-vision-green group-hover:underline">
+                  <span className="text-sm font-semibold text-primary group-hover:underline">
                     {job.job_number}
                   </span>
                 </td>
@@ -142,7 +142,7 @@ export function HistoryTable({ jobs, page, totalPages, onPageChange }: HistoryTa
                 onClick={() => onPageChange(p)}
                 className={`h-8 w-8 p-0 ${
                   p === page
-                    ? 'bg-vision-green hover:bg-green-light text-white'
+                    ? 'bg-primary hover:bg-green-light text-white'
                     : 'border-light-gray'
                 }`}
               >

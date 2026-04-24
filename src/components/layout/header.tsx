@@ -114,8 +114,8 @@ export function Header() {
 
   const iconForType = (type: string) => {
     switch (type) {
-      case 'job': return <FileText className="w-4 h-4 text-vision-green" />;
-      case 'client': return <User className="w-4 h-4 text-solar-orange" />;
+      case 'job': return <FileText className="w-4 h-4 text-primary" />;
+      case 'client': return <User className="w-4 h-4 text-secondary" />;
       case 'address': return <MapPin className="w-4 h-4 text-mid-gray" />;
       default: return null;
     }
@@ -124,9 +124,9 @@ export function Header() {
   return (
     <header className="h-16 bg-white border-b border-light-gray flex items-center justify-between px-4 md:px-6 shrink-0 z-40 relative">
       
-      {/* Mobile Logo & Brand */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-vision-green/5 border border-vision-green/10 shadow-inner">
+      {/* Mobile Logo & Brand (Hidden on Desktop) */}
+      <div className="flex items-center gap-3 md:hidden">
+        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/5 border border-primary/10 shadow-inner">
           <Image
             src="/logo.png"
             alt="TN Solar"
@@ -135,14 +135,14 @@ export function Header() {
             className="shrink-0 object-contain"
           />
         </div>
-        <span className="hidden sm:block md:hidden font-bold text-charcoal tracking-tight">TN Solar</span>
+        <span className="sm:block font-bold text-charcoal tracking-tight">TN Solar</span>
       </div>
 
       {/* Center Area: Responsive Search */}
       <div className="relative flex-1 max-w-2xl mx-3 md:mx-8">
         <div className="relative w-full group">
           <div className="absolute inset-y-0 left-0 pl-3 md:pl-3.5 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 text-mid-gray group-focus-within:text-vision-green transition-colors" />
+            <Search className="h-4 w-4 text-mid-gray group-focus-within:text-primary transition-colors" />
           </div>
           <Input
             ref={inputRef}
@@ -155,7 +155,7 @@ export function Header() {
               setShowDropdown(true);
             }}
             onFocus={() => setShowDropdown(true)}
-            className="block w-full pl-10 pr-10 h-10 bg-off-white border border-light-gray/60 rounded-xl text-sm transition-all focus:bg-white focus:border-vision-green/50 focus:ring-4 focus:ring-vision-green/10 focus:shadow-sm hover:border-gray-300"
+            className="block w-full pl-10 pr-10 h-10 bg-off-white border border-light-gray/60 rounded-xl text-sm transition-all focus:bg-white focus:border-primary/50 focus:ring-4 focus:ring-primary/10 focus:shadow-sm hover:border-gray-300"
           />
           {query && (
             <button
@@ -220,7 +220,7 @@ export function Header() {
                     onClick={() => { setQuery(s); setShowDropdown(true); }}
                     className="w-full flex items-center gap-3 px-4 py-3 md:py-2 hover:bg-off-white transition-colors text-left group"
                   >
-                    <Clock className="w-3.5 h-3.5 text-mid-gray/50 group-hover:text-vision-green transition-colors" />
+                    <Clock className="w-3.5 h-3.5 text-mid-gray/50 group-hover:text-primary transition-colors" />
                     <span className="text-sm text-dark-gray font-medium group-hover:text-charcoal transition-colors">{s}</span>
                   </button>
                 ))}
@@ -250,7 +250,7 @@ export function Header() {
           <svg className="w-5 h-5 group-hover:animate-wiggle" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
-          <span className="absolute top-2 right-2.5 w-2 h-2 bg-solar-orange rounded-full border border-white"></span>
+          <span className="absolute top-2 right-2.5 w-2 h-2 bg-secondary rounded-full border border-white"></span>
         </button>
 
       </div>

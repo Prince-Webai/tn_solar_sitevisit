@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { Calendar, Users, FileCheck, TrendingUp } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -54,9 +55,9 @@ export function KpiCards() {
         // Team status from profiles
         const { data: profiles } = await supabase.from('profiles').select('status');
         if (profiles) {
-          setTeamOnSite(profiles.filter(p => p.status === 'On Site').length);
-          setTeamEnRoute(profiles.filter(p => p.status === 'En Route').length);
-          setTeamAvailable(profiles.filter(p => !p.status || p.status === 'Available').length);
+          setTeamOnSite(profiles.filter((p: any) => p.status === 'On Site').length);
+          setTeamEnRoute(profiles.filter((p: any) => p.status === 'En Route').length);
+          setTeamAvailable(profiles.filter((p: any) => !p.status || p.status === 'Available').length);
         }
       } catch (err) {
         console.error('Failed to load KPIs:', err);
@@ -70,24 +71,27 @@ export function KpiCards() {
       title: 'Jobs Scheduled Today',
       value: todaysCount,
       icon: Calendar,
-      color: 'text-vision-green',
-      bgColor: 'bg-green-50',
+      color: 'text-primary',
+      bgColor: 'bg-blue-50',
       trend: 'Booked for today',
+      href: '/dispatch?tab=calendar'
     },
     {
       title: 'Team Status',
       value: -1, // Special rendering
       icon: Users,
-      color: 'text-vision-green',
-      bgColor: 'bg-green-50',
+      color: 'text-primary',
+      bgColor: 'bg-blue-50',
+      href: '/dispatch?tab=team'
     },
     {
       title: 'Pending Approvals',
       value: pendingCount,
       icon: FileCheck,
-      color: 'text-solar-orange',
+      color: 'text-secondary',
       bgColor: 'bg-orange-50',
       trend: 'Awaiting client response',
+      href: '/dispatch?tab=queues'
     },
   ];
 
@@ -96,51 +100,56 @@ export function KpiCards() {
       {kpis.map((kpi, index) => {
         const Icon = kpi.icon;
         return (
-          <Card
+          <Link
             key={kpi.title}
-            className={`card-hover border-light-gray animate-fade-in stagger-${index + 1}`}
-            style={{ opacity: 0 }}
+            href={kpi.href}
+            className="block"
           >
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between mb-3">
-                <p className="text-xs font-medium text-mid-gray uppercase tracking-wider">{kpi.title}</p>
-                <div className={`w-9 h-9 rounded-lg ${kpi.bgColor} flex items-center justify-center`}>
-                  <Icon className={`w-4.5 h-4.5 ${kpi.color}`} />
-                </div>
-              </div>
-
-              {kpi.value === -1 ? (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge className="bg-vision-green/15 text-green-dark border-0 hover:bg-vision-green/20">
-                      <span className="w-1.5 h-1.5 rounded-full bg-vision-green mr-1.5 animate-pulse-dot" />
-                      {teamOnSite} On Site
-                    </Badge>
-                    <Badge className="bg-solar-orange/15 text-orange-dark border-0 hover:bg-solar-orange/20">
-                      <span className="w-1.5 h-1.5 rounded-full bg-solar-orange mr-1.5 animate-pulse-dot" />
-                      {teamEnRoute} En Route
-                    </Badge>
-                    <Badge className="bg-gray-100 text-dark-gray border-0 hover:bg-gray-200">
-                      <span className="w-1.5 h-1.5 rounded-full bg-mid-gray mr-1.5" />
-                      {teamAvailable} Available
-                    </Badge>
+            <Card
+              className={`card-hover border-light-gray h-full animate-fade-in stagger-${index + 1} cursor-pointer transition-transform active:scale-95`}
+              style={{ opacity: 0 }}
+            >
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between mb-3">
+                  <p className="text-xs font-medium text-mid-gray uppercase tracking-wider">{kpi.title}</p>
+                  <div className={`w-9 h-9 rounded-lg ${kpi.bgColor} flex items-center justify-center`}>
+                    <Icon className={`w-4.5 h-4.5 ${kpi.color}`} />
                   </div>
                 </div>
-              ) : (
-                <div>
-                  <p className="text-2xl font-bold text-charcoal animate-count-up">
-                    <AnimatedCounter value={kpi.value} />
-                  </p>
-                  {kpi.trend && (
-                    <p className="text-xs text-mid-gray mt-1 flex items-center gap-1">
-                      <TrendingUp className="w-3 h-3" />
-                      {kpi.trend}
+
+                {kpi.value === -1 ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge className="bg-primary/15 text-primary-dark border-0 hover:bg-primary/20">
+                        <span className="w-1.5 h-1.5 rounded-full bg-primary mr-1.5 animate-pulse-dot" />
+                        {teamOnSite} On Site
+                      </Badge>
+                      <Badge className="bg-secondary/15 text-secondary-dark border-0 hover:bg-secondary/20">
+                        <span className="w-1.5 h-1.5 rounded-full bg-secondary mr-1.5 animate-pulse-dot" />
+                        {teamEnRoute} En Route
+                      </Badge>
+                      <Badge className="bg-gray-100 text-dark-gray border-0 hover:bg-gray-200">
+                        <span className="w-1.5 h-1.5 rounded-full bg-mid-gray mr-1.5" />
+                        {teamAvailable} Available
+                      </Badge>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <p className="text-2xl font-bold text-charcoal animate-count-up">
+                      <AnimatedCounter value={kpi.value} />
                     </p>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                    {kpi.trend && (
+                      <p className="text-xs text-mid-gray mt-1 flex items-center gap-1">
+                        <TrendingUp className="w-3 h-3" />
+                        {kpi.trend}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </Link>
         );
       })}
     </div>

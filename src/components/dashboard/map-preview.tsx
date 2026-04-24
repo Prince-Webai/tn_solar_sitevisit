@@ -34,12 +34,12 @@ export function MapPreview() {
       <CardHeader className="pb-3 border-b border-light-gray bg-gray-50/30">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-             <div className="w-8 h-8 bg-vision-green/10 rounded-lg flex items-center justify-center">
-                <Navigation className="w-4 h-4 text-vision-green" />
+             <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
+                <Navigation className="w-4 h-4 text-primary" />
              </div>
              <CardTitle className="text-base font-bold text-charcoal">Live Team Map</CardTitle>
           </div>
-          <span className="text-[10px] font-black uppercase tracking-widest text-mid-gray flex items-center gap-1.5 group-hover:text-vision-green transition-colors">
+          <span className="text-[10px] font-black uppercase tracking-widest text-mid-gray flex items-center gap-1.5 group-hover:text-primary transition-colors">
             Dispatch Board
             <ExternalLink className="w-3 h-3" />
           </span>
@@ -48,14 +48,14 @@ export function MapPreview() {
       <CardContent className="flex-1 p-0 relative">
         {loading ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-off-white/50">
-            <Loader2 className="w-6 h-6 text-vision-green animate-spin" />
+            <Loader2 className="w-6 h-6 text-primary animate-spin" />
             <p className="text-[9px] font-black text-mid-gray uppercase tracking-widest">Scanning Network</p>
           </div>
         ) : (
-          <div className="relative h-full min-h-[300px] bg-gradient-to-br from-green-50/50 to-emerald-50/50 overflow-hidden">
+          <div className="relative h-full min-h-[300px] bg-gradient-to-br from-blue-50/50 to-indigo-50/50 overflow-hidden">
             {/* Grid lines to simulate map */}
             <div className="absolute inset-0 opacity-10">
-              <svg width="100%" height="100%" className="text-vision-green">
+              <svg width="100%" height="100%" className="text-primary">
                 {Array.from({ length: 12 }).map((_, i) => (
                   <line
                     key={`h${i}`}
@@ -85,7 +85,7 @@ export function MapPreview() {
                 { left: '75%', top: '35%' },
               ];
               const pos = positions[i % positions.length];
-              const colors = ['bg-vision-green', 'bg-solar-orange', 'bg-blue-500'];
+              const colors = ['bg-primary', 'bg-secondary', 'bg-blue-500'];
 
               return (
                 <div
@@ -102,9 +102,9 @@ export function MapPreview() {
             })}
 
             {/* Region label */}
-            <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-white/90 backdrop-blur-md rounded-xl px-3 py-2 shadow-xl border border-light-gray group-hover:border-vision-green/30 transition-colors">
-              <div className="w-6 h-6 bg-vision-green/10 rounded-lg flex items-center justify-center">
-                 <Navigation className="w-3.5 h-3.5 text-vision-green" />
+            <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-white/90 backdrop-blur-md rounded-xl px-3 py-2 shadow-xl border border-light-gray group-hover:border-primary/30 transition-colors">
+              <div className="w-6 h-6 bg-primary/10 rounded-lg flex items-center justify-center">
+                 <Navigation className="w-3.5 h-3.5 text-primary" />
               </div>
               <div className="flex flex-col">
                 <span className="text-[10px] font-black text-charcoal uppercase tracking-tight">Chennai, TN</span>
@@ -113,9 +113,9 @@ export function MapPreview() {
             </div>
 
             {/* Staff count */}
-            <div className="absolute top-4 right-4 flex items-center gap-2 bg-white/90 backdrop-blur-md rounded-xl px-3 py-2 shadow-xl border border-light-gray group-hover:border-solar-orange/30 transition-colors">
-              <div className="w-6 h-6 bg-solar-orange/10 rounded-lg flex items-center justify-center">
-                <Users className="w-3.5 h-3.5 text-solar-orange" />
+            <div className="absolute top-4 right-4 flex items-center gap-2 bg-white/90 backdrop-blur-md rounded-xl px-3 py-2 shadow-xl border border-light-gray group-hover:border-secondary/30 transition-colors">
+              <div className="w-6 h-6 bg-secondary/10 rounded-lg flex items-center justify-center">
+                <Users className="w-3.5 h-3.5 text-secondary" />
               </div>
               <div className="flex flex-col">
                 <span className="text-[10px] font-black text-charcoal uppercase tracking-tight">{staff.length} Members</span>
@@ -124,7 +124,7 @@ export function MapPreview() {
             </div>
 
             {staff.length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center text-center p-8 bg-off-white/40">
+              <div className="absolute inset-0 flex items-center justify-center text-center p-8 bg-blue-50/20">
                 <p className="text-[10px] font-black text-mid-gray uppercase tracking-widest">No active staff tracked currently</p>
               </div>
             )}

@@ -65,20 +65,20 @@ export const siteVisitService = {
       updated_at: new Date().toISOString(),
     };
 
-    const { data: result, error } = await supabase
+    const { data: result, error: upsertError } = await supabase
       .from('site_visits')
       .upsert(payload, { onConflict: 'job_id' })
       .select()
       .single();
 
-    if (error) {
-      console.error('Error upserting site visit:', error);
-      throw error;
+    if (upsertError) {
+      console.error('Error upserting site visit:', upsertError);
+      throw new Error(`Failed to save site visit data: ${upsertError.message}`);
     }
 
     // Sync GPS to jobs table for map view
     if (data.siteGps) {
-      await supabase
+      const { error: jobUpdateError } = await supabase
         .from('jobs')
         .update({
           latitude: data.siteGps.lat,
@@ -86,7 +86,29 @@ export const siteVisitService = {
           status: 'In Progress' // Automatically move to in progress on visit submission
         })
         .eq('id', jobId);
+      
+      if (jobUpdateError) {
+        console.error('Error updating job GPS/status:', jobUpdateError);
+        // We don't throw here to avoid failing the whole submission if just the job sync fails,
+        // but we should probably log it or alert the user.
+      }
     }
+
+    // Add audit log entry
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', engineerId)
+      .single();
+
+    await supabase.from('audit_logs').insert({
+      user_id: engineerId,
+      user_name: profile?.full_name || 'System',
+      action: 'site_visit_submitted',
+      entity_type: 'job',
+      entity_id: jobId,
+      details: `Site visit report submitted for job`,
+    });
 
     return result;
   }

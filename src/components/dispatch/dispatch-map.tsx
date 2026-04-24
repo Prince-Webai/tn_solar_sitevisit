@@ -90,7 +90,7 @@ export function DispatchMap({ onNewJob, refreshKey }: { onNewJob: () => void; re
     return (
       <div className="flex-1 relative h-full min-w-0 flex items-center justify-center bg-off-white/30">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-10 h-10 text-vision-green animate-spin" />
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
           <p className="text-[10px] font-black text-mid-gray uppercase tracking-[0.2em]">Initializing Map Engine</p>
         </div>
       </div>
@@ -124,10 +124,18 @@ export function DispatchMap({ onNewJob, refreshKey }: { onNewJob: () => void; re
             <MarkerF
               key={loc.id}
               position={{ lat: Number(loc.latitude), lng: Number(loc.longitude) }}
+              title={loc.profile?.full_name}
               icon={{
                 url: createStaffIcon(),
                 scaledSize: new window.google.maps.Size(40, 40),
                 anchor: new window.google.maps.Point(20, 20),
+              }}
+              label={{
+                text: loc.profile?.full_name || 'Staff',
+                className: 'map-marker-label',
+                color: '#1a1a1a',
+                fontSize: '10px',
+                fontWeight: 'bold'
               }}
               onClick={() => {
                 setSelectedJob(null);
@@ -161,7 +169,7 @@ export function DispatchMap({ onNewJob, refreshKey }: { onNewJob: () => void; re
               options={{ pixelOffset: new window.google.maps.Size(0, -20) }}
             >
               <div className="font-sans p-2 min-w-[140px]">
-                <p className="text-xs font-black text-vision-green uppercase tracking-widest mb-1">On Site</p>
+                <p className="text-xs font-black text-primary uppercase tracking-widest mb-1">On Site</p>
                 <strong className="text-charcoal text-sm block mb-0.5">{selectedStaff.profile?.full_name}</strong>
                 <span className="text-mid-gray text-[10px] font-bold uppercase tracking-tighter">{selectedStaff.profile?.role}</span>
               </div>
@@ -176,11 +184,11 @@ export function DispatchMap({ onNewJob, refreshKey }: { onNewJob: () => void; re
             >
               <div className="font-sans p-3 max-w-[220px] space-y-2">
                 <div className="flex items-center justify-between gap-3">
-                   <strong className="text-vision-green font-black text-xs uppercase tracking-widest">{selectedJob.job_number}</strong>
+                   <strong className="text-primary font-black text-xs uppercase tracking-widest">{selectedJob.job_number}</strong>
                    <Badge variant="secondary" className="bg-off-white text-[9px] font-black uppercase border-none">{selectedJob.status}</Badge>
                 </div>
                 <div>
-                  <p className="text-charcoal text-sm font-bold leading-tight">{selectedJob.client?.first_name} {selectedJob.client?.last_name}</p>
+                  <p className="text-charcoal text-sm font-bold leading-tight">{selectedJob.client?.first_name || 'Valued'} {selectedJob.client?.last_name || 'Client'}</p>
                   <div className="flex items-center gap-1 mt-1 text-mid-gray">
                     <MapPinIcon className="w-3 h-3 shrink-0" />
                     <p className="text-[10px] font-medium leading-relaxed">{selectedJob.address}</p>
@@ -200,20 +208,25 @@ export function DispatchMap({ onNewJob, refreshKey }: { onNewJob: () => void; re
         <p className="text-[10px] font-black text-charcoal uppercase tracking-[0.2em] mb-4 border-b border-light-gray pb-2">Map Legend</p>
         <div className="space-y-3">
           <div className="flex items-center gap-3 group">
-            <div className="w-3.5 h-3.5 rounded-full bg-vision-green border-2 border-white shadow-md group-hover:scale-125 transition-transform" />
+            <div className="w-3.5 h-3.5 rounded-full bg-primary border-2 border-white shadow-md group-hover:scale-125 transition-transform" />
             <span className="text-[10px] font-bold text-dark-gray uppercase tracking-widest">Active Staff</span>
           </div>
           <div className="flex items-center gap-3 group">
-            <div className="w-3.5 h-3.5 rounded-full bg-solar-orange border-2 border-white shadow-md group-hover:scale-125 transition-transform" />
+            <div className="w-3.5 h-3.5 rounded-full bg-secondary border-2 border-white shadow-md group-hover:scale-125 transition-transform" />
             <span className="text-[10px] font-bold text-dark-gray uppercase tracking-widest">Uncaptured Site</span>
           </div>
           <div className="flex items-center gap-3 group">
-            <div className="w-3.5 h-3.5 rounded-full bg-vision-green flex items-center justify-center border-2 border-white shadow-md group-hover:scale-125 transition-transform">
+            <div className="w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center border-2 border-white shadow-md group-hover:scale-125 transition-transform">
                <div className="w-1.5 h-1.5 rounded-full bg-white opacity-50" />
             </div>
-            <span className="text-[10px] font-bold text-dark-gray uppercase tracking-widest">Verified Site</span>
+            <span className="text-[10px] font-bold text-dark-gray uppercase tracking-widest">Captured Site</span>
           </div>
         </div>
+        {!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY && (
+          <p className="text-[9px] text-red-500 font-bold mt-2 bg-red-50 p-2 rounded-lg border border-red-100">
+            ⚠ API Key missing in .env.local
+          </p>
+        )}
       </div>
     </div>
   );

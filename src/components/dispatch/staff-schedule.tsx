@@ -27,8 +27,8 @@ export function StaffSchedule() {
 
   const statusColor = (status?: string) => {
     switch (status) {
-      case 'On Site': return 'bg-vision-green text-white';
-      case 'En Route': return 'bg-solar-orange text-white';
+      case 'On Site': return 'bg-primary text-white';
+      case 'En Route': return 'bg-secondary text-white';
       case 'Available': return 'bg-gray-100 text-dark-gray';
       default: return 'bg-gray-100 text-dark-gray';
     }
@@ -83,7 +83,7 @@ export function StaffSchedule() {
                 {/* Staff info */}
                 <div className="flex items-center gap-2.5 mb-3">
                   <Avatar className="w-8 h-8 shrink-0">
-                    <AvatarFallback className="bg-vision-green/10 text-green-dark text-xs font-semibold">
+                    <AvatarFallback className="bg-primary/10 text-primary-dark text-xs font-semibold">
                       {staff.full_name.split(' ').map(n => n[0]).join('')}
                     </AvatarFallback>
                   </Avatar>
@@ -105,7 +105,7 @@ export function StaffSchedule() {
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${
                       capacityPercent > 90 ? 'bg-destructive' :
-                        capacityPercent > 70 ? 'bg-solar-orange' : 'bg-vision-green'
+                        capacityPercent > 70 ? 'bg-secondary' : 'bg-primary'
                     }`}
                     style={{ width: `${capacityPercent}%` }}
                   />

@@ -23,6 +23,7 @@ import { PhotoInput } from './PhotoInput';
 import { VideoInput } from './VideoInput';
 import { createClient } from '@/lib/supabase/client';
 import { siteVisitService } from '@/lib/supabase/site-visit-service';
+import { jobService } from '@/lib/supabase/service';
 import type { SiteVisitData } from '@/types/site-visit';
 import { Loader2 } from 'lucide-react';
 import { useEffect } from 'react';
@@ -36,7 +37,7 @@ const STEPS = [
   { id: 6, title: 'Declaration & Submission', icon: CheckCircle2 },
 ];
 
-export function SiteVisitForm({ jobId }: { jobId?: string }) {
+export function SiteVisitForm({ jobId, onSuccess }: { jobId?: string, onSuccess?: () => void }) {
   const { t, i18n } = useTranslation();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,23 +57,34 @@ export function SiteVisitForm({ jobId }: { jobId?: string }) {
   const { watch, setValue, handleSubmit, reset, formState: { errors } } = methods;
 
   useEffect(() => {
-    async function loadExistingData() {
+    async function loadData() {
       if (!jobId) return;
       try {
+        // 1. Try to load existing site visit
         const existingData = await siteVisitService.fetchByJobId(jobId);
         if (existingData) {
           reset(existingData);
-          if (existingData.signature) {
-            // signatureRef doesn't support setting value directly from URL easily 
-            // but we can store it in the state and display it
+          return;
+        }
+
+        // 2. If no site visit yet, pre-fill from job/client data
+        const job = await jobService.fetchJobById(jobId);
+        if (job) {
+          setValue('clientName', `${job.client?.first_name || ''} ${job.client?.last_name || ''}`.trim() || 'Valued Client');
+          setValue('clientPhone', job.client?.phone || job.client?.mobile || '');
+          setValue('siteAddress', job.address || '');
+          
+          // Also pre-fill GPS if job has it
+          if (job.latitude && job.longitude) {
+            setValue('siteGps', { lat: Number(job.latitude), lng: Number(job.longitude) });
           }
         }
       } catch (error) {
-        console.error('Failed to load existing site visit:', error);
+        console.error('Failed to load site visit or job data:', error);
       }
     }
-    loadExistingData();
-  }, [jobId, reset]);
+    loadData();
+  }, [jobId, reset, setValue]);
 
   const nextStep = () => setCurrentStep(prev => Math.min(prev + 1, 6));
   const prevStep = () => setCurrentStep(prev => Math.max(prev - 1, 1));
@@ -98,9 +110,10 @@ export function SiteVisitForm({ jobId }: { jobId?: string }) {
       });
 
       toast.success('Site visit submitted successfully!');
-    } catch (error) {
+      onSuccess?.();
+    } catch (error: any) {
       console.error('Submission error:', error);
-      toast.error('Failed to submit site visit.');
+      toast.error(error.message || 'Failed to submit site visit. Please check your connection and try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -127,7 +140,7 @@ export function SiteVisitForm({ jobId }: { jobId?: string }) {
 
         <div className="relative h-2 bg-light-gray rounded-full overflow-hidden">
           <motion.div 
-            className="absolute top-0 left-0 h-full bg-vision-green"
+            className="absolute top-0 left-0 h-full bg-primary"
             initial={{ width: 0 }}
             animate={{ width: `${(currentStep / 6) * 100}%` }}
             transition={{ duration: 0.3 }}
@@ -142,8 +155,8 @@ export function SiteVisitForm({ jobId }: { jobId?: string }) {
             return (
               <div key={step.id} className="flex flex-col items-center gap-1.5 w-12">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                  isActive ? 'bg-vision-green text-white scale-110 shadow-lg' : 
-                  isCompleted ? 'bg-vision-green/20 text-vision-green' : 'bg-white text-mid-gray border border-light-gray'
+                  isActive ? 'bg-primary text-white scale-110 shadow-lg' : 
+                  isCompleted ? 'bg-primary/20 text-primary' : 'bg-white text-mid-gray border border-light-gray'
                 }`}>
                   <Icon className="w-4 h-4" />
                 </div>
@@ -222,13 +235,13 @@ export function SiteVisitForm({ jobId }: { jobId?: string }) {
               {currentStep === 2 && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <PhotoInput label="House Front Photo" path="house/front" onUpload={(url) => setValue('photos.front', url)} value={watch('photos.front')} />
-                    <PhotoInput label="House Left Photo" path="house/left" onUpload={(url) => setValue('photos.left', url)} value={watch('photos.left')} />
-                    <PhotoInput label="House Right Photo" path="house/right" onUpload={(url) => setValue('photos.right', url)} value={watch('photos.right')} />
-                    <PhotoInput label="House Back Photo" path="house/back" onUpload={(url) => setValue('photos.back', url)} value={watch('photos.back')} />
+                    <PhotoInput label="House Front Photo" path="house/front" jobId={jobId} onUpload={(url) => setValue('photos.front', url)} value={watch('photos.front')} />
+                    <PhotoInput label="House Left Photo" path="house/left" jobId={jobId} onUpload={(url) => setValue('photos.left', url)} value={watch('photos.left')} />
+                    <PhotoInput label="House Right Photo" path="house/right" jobId={jobId} onUpload={(url) => setValue('photos.right', url)} value={watch('photos.right')} />
+                    <PhotoInput label="House Back Photo" path="house/back" jobId={jobId} onUpload={(url) => setValue('photos.back', url)} value={watch('photos.back')} />
                   </div>
                   <div className="pt-2">
-                    <PhotoInput label="Solar System Location" path="house/solar" onUpload={(url) => setValue('photos.solarSystemLocation', url)} value={watch('photos.solarSystemLocation')} />
+                    <PhotoInput label="Solar System Location" path="house/solar" jobId={jobId} onUpload={(url) => setValue('photos.solarSystemLocation', url)} value={watch('photos.solarSystemLocation')} />
                   </div>
                 </div>
               )}
@@ -236,6 +249,10 @@ export function SiteVisitForm({ jobId }: { jobId?: string }) {
               {/* STEP 3: Solar Space Details */}
               {currentStep === 3 && (
                 <div className="space-y-6">
+                  <div className="bg-primary/5 p-4 rounded-xl border border-primary/10">
+                    <h3 className="text-sm font-bold text-primary uppercase tracking-wider mb-1">Available Solar Area</h3>
+                    <p className="text-xs text-mid-gray leading-relaxed">Measure the length and width of the roof or ground space intended for solar panel installation.</p>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-1.5">
                       <label className="text-sm font-semibold text-charcoal">Length (m)</label>
@@ -265,7 +282,7 @@ export function SiteVisitForm({ jobId }: { jobId?: string }) {
                       </SelectContent>
                     </Select>
                   </div>
-                  <VideoInput label="Shadow Analysis (Video/Panorama)" path="videos/shadow" onUpload={(url) => setValue('videos.shadowAnalysis', url)} value={watch('videos.shadowAnalysis')} />
+                  <VideoInput label="Shadow Analysis (Video/Panorama)" path="videos/shadow" jobId={jobId} onUpload={(url) => setValue('videos.shadowAnalysis', url)} value={watch('videos.shadowAnalysis')} />
                 </div>
               )}
 
@@ -280,7 +297,7 @@ export function SiteVisitForm({ jobId }: { jobId?: string }) {
                           key={v}
                           type="button"
                           variant={mountType === v ? 'default' : 'outline'}
-                          className={mountType === v ? 'bg-vision-green' : ''}
+                          className={mountType === v ? 'bg-primary' : ''}
                           onClick={() => setValue('structure.size', v)}
                         >
                           {v}
@@ -289,7 +306,7 @@ export function SiteVisitForm({ jobId }: { jobId?: string }) {
                     </div>
                   </div>
                   {mountType === 'CUSTOM DESIGN' && (
-                    <PhotoInput label="Custom Structure Design" onUpload={(url) => setValue('photos.structureCustomDesign', url)} value={watch('photos.structureCustomDesign')} />
+                    <PhotoInput label="Custom Structure Design" jobId={jobId} onUpload={(url) => setValue('photos.structureCustomDesign', url)} value={watch('photos.structureCustomDesign')} />
                   )}
                   
                   <div className="flex items-center gap-3 p-4 bg-off-white rounded-xl border border-light-gray">
@@ -325,9 +342,9 @@ export function SiteVisitForm({ jobId }: { jobId?: string }) {
                     </Select>
                   </div>
                   
-                  <PhotoInput label="Inverter Location Photo" onUpload={(url) => setValue('photos.inverter', url)} value={watch('photos.inverter')} />
-                  <VideoInput label="Plant to Inverter Video" onUpload={(url) => setValue('videos.plantToInverter', url)} value={watch('videos.plantToInverter')} />
-                  <VideoInput label="Inverter to Earthing Video" onUpload={(url) => setValue('videos.inverterToEarthing', url)} value={watch('videos.inverterToEarthing')} />
+                  <PhotoInput label="Inverter Location Photo" jobId={jobId} onUpload={(url) => setValue('photos.inverter', url)} value={watch('photos.inverter')} />
+                  <VideoInput label="Plant to Inverter Video" jobId={jobId} onUpload={(url) => setValue('videos.plantToInverter', url)} value={watch('videos.plantToInverter')} />
+                  <VideoInput label="Inverter to Earthing Video" jobId={jobId} onUpload={(url) => setValue('videos.inverterToEarthing', url)} value={watch('videos.inverterToEarthing')} />
                 </div>
               )}
 
@@ -335,26 +352,26 @@ export function SiteVisitForm({ jobId }: { jobId?: string }) {
               {currentStep === 5 && (
                 <div className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <PhotoInput label="Engineer Photo / Selfie" onUpload={(url) => setValue('photos.engineer', url)} value={watch('photos.engineer')} />
-                    <PhotoInput label="Client Photo" onUpload={(url) => setValue('photos.client', url)} value={watch('photos.client')} />
+                    <PhotoInput label="Engineer Photo / Selfie" jobId={jobId} onUpload={(url) => setValue('photos.engineer', url)} value={watch('photos.engineer')} />
+                    <PhotoInput label="Client Photo" jobId={jobId} onUpload={(url) => setValue('photos.client', url)} value={watch('photos.client')} />
                   </div>
-                  <PhotoInput label="Location of ACDB and DCDB Earthing" onUpload={(url) => setValue('photos.acdbDcdb', url)} value={watch('photos.acdbDcdb')} />
-                  <VideoInput label="Lightning Arrestor Earthing Location" onUpload={(url) => setValue('videos.lightningArrestorEarthing', url)} value={watch('videos.lightningArrestorEarthing')} />
-                  <PhotoInput label="Road Access Photo" onUpload={(url) => setValue('photos.roadAccess', url)} value={watch('photos.roadAccess')} />
+                  <PhotoInput label="Location of ACDB and DCDB Earthing" jobId={jobId} onUpload={(url) => setValue('photos.acdbDcdb', url)} value={watch('photos.acdbDcdb')} />
+                  <VideoInput label="Lightning Arrestor Earthing Location" jobId={jobId} onUpload={(url) => setValue('videos.lightningArrestorEarthing', url)} value={watch('videos.lightningArrestorEarthing')} />
+                  <PhotoInput label="Road Access Photo" jobId={jobId} onUpload={(url) => setValue('photos.roadAccess', url)} value={watch('photos.roadAccess')} />
                 </div>
               )}
 
               {/* STEP 6: Declaration & Signature */}
               {currentStep === 6 && (
                 <div className="space-y-6">
-                  <div className="bg-vision-green/5 border border-vision-green/20 p-6 rounded-2xl space-y-4">
+                  <div className="bg-primary/5 border border-primary/20 p-6 rounded-2xl space-y-4">
                     <p className="text-sm font-medium text-charcoal leading-relaxed">
-                      <span className="block mb-2 text-vision-green uppercase text-[10px] font-bold tracking-widest">English</span>
+                      <span className="block mb-2 text-primary uppercase text-[10px] font-bold tracking-widest">English</span>
                       {t('declaration_en')}
                     </p>
-                    <div className="h-px bg-vision-green/10" />
+                    <div className="h-px bg-primary/10" />
                     <p className="text-sm font-medium text-charcoal leading-relaxed">
-                      <span className="block mb-2 text-vision-green uppercase text-[10px] font-bold tracking-widest">Tamil</span>
+                      <span className="block mb-2 text-primary uppercase text-[10px] font-bold tracking-widest">Tamil</span>
                       {t('declaration_ta')}
                     </p>
                   </div>
@@ -404,7 +421,7 @@ export function SiteVisitForm({ jobId }: { jobId?: string }) {
           <Button
             type="button"
             onClick={nextStep}
-            className="h-12 px-8 bg-vision-green hover:bg-green-dark font-semibold text-white shadow-lg shadow-vision-green/20"
+            className="h-12 px-8 bg-primary hover:bg-primary-dark font-semibold text-white shadow-lg shadow-primary/20"
           >
             {t('next')}
             <ChevronRight className="w-4 h-4 ml-2" />
@@ -414,7 +431,7 @@ export function SiteVisitForm({ jobId }: { jobId?: string }) {
             type="submit"
             onClick={handleSubmit(onSubmit)}
             disabled={isSubmitting}
-            className="h-12 px-8 bg-solar-orange hover:bg-orange-light font-bold text-white shadow-lg shadow-solar-orange/20"
+            className="h-12 px-8 bg-secondary hover:bg-orange-light font-bold text-white shadow-lg shadow-secondary/20"
           >
             {isSubmitting ? (
               <Loader2 className="w-4 h-4 animate-spin mr-2" />

@@ -26,7 +26,7 @@ export function BottomNav() {
   );
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-[72px] pb-safe bg-white/80 backdrop-blur-xl border-t border-light-gray flex items-center justify-around px-4 z-50 shadow-[0_-8px_24px_rgba(0,0,0,0.06)] transition-all">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-[72px] pb-safe bg-white/90 backdrop-blur-xl border-t border-light-gray flex items-center justify-around px-4 z-50 shadow-[0_-8px_24px_rgba(0,0,0,0.06)] transition-all">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
@@ -36,7 +36,7 @@ export function BottomNav() {
             key={item.href}
             href={item.href}
             className={`flex flex-col items-center justify-center gap-1.5 w-full h-full transition-all duration-300 ${
-              isActive ? 'text-vision-green' : 'text-mid-gray/70 hover:text-dark-gray'
+              isActive ? 'text-primary' : 'text-mid-gray/70 hover:text-dark-gray'
             }`}
           >
             <div className={`relative flex items-center justify-center transition-all duration-300 ${
@@ -46,7 +46,7 @@ export function BottomNav() {
                 isActive ? 'stroke-[2.5px]' : 'stroke-2'
               }`} />
               {isActive && (
-                <div className="absolute -bottom-1 w-1 h-1 bg-vision-green rounded-full shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                <div className="absolute -bottom-1 w-1 h-1 bg-primary rounded-full shadow-[0_0_8px_rgba(30,64,175,0.4)]" />
               )}
             </div>
             <span className={`text-[10px] font-bold tracking-tight transition-all ${

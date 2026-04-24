@@ -2,11 +2,11 @@ import type { Profile, Client, Job, JobItem, ChecklistItem, AuditLog, StaffLocat
 
 // ──── Staff / Profiles ────
 export const mockProfiles: Profile[] = [
-  { id: '1', email: 'rahul@visionsolar.com.au', full_name: 'Rahul Mandal', role: 'Admin', avatar_url: '', status: 'Available' },
-  { id: '2', email: 'james@visionsolar.com.au', full_name: 'James Chen', role: 'Technician', avatar_url: '', status: 'On Site' },
-  { id: '3', email: 'sarah@visionsolar.com.au', full_name: 'Sarah Mitchell', role: 'Technician', avatar_url: '', status: 'En Route' },
-  { id: '4', email: 'tom@visionsolar.com.au', full_name: 'Tom Baker', role: 'Technician', avatar_url: '', status: 'Available' },
-  { id: '5', email: 'lisa@visionsolar.com.au', full_name: 'Lisa Nguyen', role: 'Dispatcher', avatar_url: '', status: 'Available' },
+  { id: '1', email: 'rahul@tnsolar.com.au', full_name: 'Rahul Mandal', role: 'Admin', avatar_url: '', status: 'Available' },
+  { id: '2', email: 'james@tnsolar.com.au', full_name: 'James Chen', role: 'Technician', avatar_url: '', status: 'On Site' },
+  { id: '3', email: 'sarah@tnsolar.com.au', full_name: 'Sarah Mitchell', role: 'Technician', avatar_url: '', status: 'En Route' },
+  { id: '4', email: 'tom@tnsolar.com.au', full_name: 'Tom Baker', role: 'Technician', avatar_url: '', status: 'Available' },
+  { id: '5', email: 'lisa@tnsolar.com.au', full_name: 'Lisa Nguyen', role: 'Dispatcher', avatar_url: '', status: 'Available' },
 ];
 
 // ──── Clients ────
@@ -22,7 +22,7 @@ export const mockClients: Client[] = [
 // ──── Jobs ────
 export const mockJobs: Job[] = [
   {
-    id: 'j1', job_number: 'VS-1201', client_id: 'c1', client: mockClients[0],
+    id: 'j1', job_number: 'TN-1201', client_id: 'c1', client: mockClients[0],
     address: '42 Anna Salai, Chennai TN 600002', suburb: 'Chennai',
     status: 'Work Order', category: 'Installation',
     description: '6.6kW solar panel system installation - 16x Trina Vertex S panels with Fronius Primo inverter',
@@ -33,7 +33,7 @@ export const mockJobs: Job[] = [
     billing_same_as_job: true, created_at: '2026-04-10T08:00:00Z', updated_at: '2026-04-17T09:00:00Z',
   },
   {
-    id: 'j2', job_number: 'VS-1202', client_id: 'c2', client: mockClients[1],
+    id: 'j2', job_number: 'TN-1202', client_id: 'c2', client: mockClients[1],
     address: '15 T. Nagar, Chennai TN 600017', suburb: 'T. Nagar',
     status: 'Lead', category: 'Installation',
     description: '10kW commercial solar system with battery storage - SolarEdge inverter with Tesla Powerwall',
@@ -43,7 +43,7 @@ export const mockJobs: Job[] = [
     billing_same_as_job: true, created_at: '2026-04-12T10:00:00Z', updated_at: '2026-04-16T14:00:00Z',
   },
   {
-    id: 'j3', job_number: 'VS-1203', client_id: 'c3', client: mockClients[2],
+    id: 'j3', job_number: 'TN-1203', client_id: 'c3', client: mockClients[2],
     address: '88 Adyar, Chennai TN 600020', suburb: 'Adyar',
     status: 'Lead', category: 'Site Assessment', requires_site_visit: true,
     description: 'Roof assessment for potential 5kW residential installation - check shading and structural integrity',
@@ -52,7 +52,7 @@ export const mockJobs: Job[] = [
     billing_same_as_job: true, created_at: '2026-04-15T09:00:00Z', updated_at: '2026-04-17T10:00:00Z',
   },
   {
-    id: 'j4', job_number: 'VS-1204', client_id: 'c4', client: mockClients[3],
+    id: 'j4', job_number: 'TN-1204', client_id: 'c4', client: mockClients[3],
     address: '23 Velachery, Chennai TN 600042', suburb: 'Velachery',
     status: 'Work Order', category: 'Installation',
     description: '8.8kW solar panel system with micro-inverters - 22x Jinko Tiger Neo panels',
@@ -63,7 +63,7 @@ export const mockJobs: Job[] = [
     billing_same_as_job: true, created_at: '2026-04-08T11:00:00Z', updated_at: '2026-04-17T08:00:00Z',
   },
   {
-    id: 'j5', job_number: 'VS-1205', client_id: 'c5', client: mockClients[4],
+    id: 'j5', job_number: 'TN-1205', client_id: 'c5', client: mockClients[4],
     address: '7 OMR, Chennai TN 600119', suburb: 'OMR',
     status: 'Lead', category: 'Installation',
     description: '5kW residential solar system - budget-friendly option with Canadian Solar panels',
@@ -73,7 +73,7 @@ export const mockJobs: Job[] = [
     billing_same_as_job: true, created_at: '2026-04-14T13:00:00Z', updated_at: '2026-04-16T15:00:00Z',
   },
   {
-    id: 'j6', job_number: 'VS-1206', client_id: 'c6', client: mockClients[5],
+    id: 'j6', job_number: 'TN-1206', client_id: 'c6', client: mockClients[5],
     address: '56 ECR, Chennai TN 600115', suburb: 'ECR',
     status: 'Completed', category: 'Installation',
     description: '13.2kW solar panel system with 2x Tesla Powerwall batteries - premium installation',
@@ -84,7 +84,7 @@ export const mockJobs: Job[] = [
     billing_same_as_job: true, created_at: '2026-03-25T09:00:00Z', updated_at: '2026-04-16T17:00:00Z',
   },
   {
-    id: 'j7', job_number: 'VS-1198', client_id: 'c1', client: mockClients[0],
+    id: 'j7', job_number: 'TN-1198', client_id: 'c1', client: mockClients[0],
     address: '42 Anna Salai, Chennai TN 600002', suburb: 'Chennai',
     status: 'Completed', category: 'Service',
     description: 'Annual inverter service and panel cleaning - Fronius Primo 5.0 check',
@@ -95,7 +95,7 @@ export const mockJobs: Job[] = [
     billing_same_as_job: true, created_at: '2026-04-01T08:00:00Z', updated_at: '2026-04-10T15:00:00Z',
   },
   {
-    id: 'j8', job_number: 'VS-1199', client_id: 'c3', client: mockClients[2],
+    id: 'j8', job_number: 'TN-1199', client_id: 'c3', client: mockClients[2],
     address: '88 Adyar, Chennai TN 600020', suburb: 'Adyar',
     status: 'Completed', category: 'Service',
     description: 'Emergency inverter fault diagnosis - SolarEdge SE7K showing ground fault error',
@@ -134,22 +134,17 @@ export const mockStaffLocations: StaffLocation[] = [
 
 // ──── Audit Logs ────
 export const mockAuditLogs: AuditLog[] = [
-  { id: 'al1', user_id: '1', user_name: 'Rahul Mandal', action: 'status_change', entity_type: 'job', entity_id: 'j1', details: 'Changed Job #VS-1201 to Work Order', created_at: '2026-04-17T09:00:00Z' },
-  { id: 'al2', user_id: '1', user_name: 'Rahul Mandal', action: 'assigned', entity_type: 'job', entity_id: 'j1', details: 'Assigned Job #VS-1201 to James Chen', created_at: '2026-04-17T09:05:00Z' },
-  { id: 'al3', user_id: '5', user_name: 'Lisa Nguyen', action: 'status_change', entity_type: 'job', entity_id: 'j4', details: 'Changed Job #VS-1204 to Work Order', created_at: '2026-04-17T08:30:00Z' },
-  { id: 'al4', user_id: '2', user_name: 'James Chen', action: 'completed', entity_type: 'job', entity_id: 'j6', details: 'Marked Job #VS-1206 as Completed', created_at: '2026-04-16T17:00:00Z' },
-  { id: 'al5', user_id: '1', user_name: 'Rahul Mandal', action: 'created', entity_type: 'job', entity_id: 'j5', details: 'Created new Lead #VS-1205 for Robert Chang', created_at: '2026-04-14T13:00:00Z' },
-  { id: 'al6', user_id: '3', user_name: 'Sarah Mitchell', action: 'completed', entity_type: 'job', entity_id: 'j8', details: 'Marked Job #VS-1199 as Completed', created_at: '2026-04-12T16:00:00Z' },
-  { id: 'al7', user_id: '1', user_name: 'Rahul Mandal', action: 'lead_created', entity_type: 'job', entity_id: 'j2', details: 'Created Lead #VS-1202 for Emma Rodriguez', created_at: '2026-04-12T10:30:00Z' },
+  { id: 'al1', user_id: '1', user_name: 'Rahul Mandal', action: 'status_change', entity_type: 'job', entity_id: 'j1', details: 'Changed Job #TN-1201 to Work Order', created_at: '2026-04-17T09:00:00Z' },
+  { id: 'al2', user_id: '1', user_name: 'Rahul Mandal', action: 'assigned', entity_type: 'job', entity_id: 'j1', details: 'Assigned Job #TN-1201 to James Chen', created_at: '2026-04-17T09:05:00Z' },
+  { id: 'al3', user_id: '5', user_name: 'Lisa Nguyen', action: 'status_change', entity_type: 'job', entity_id: 'j4', details: 'Changed Job #TN-1204 to Work Order', created_at: '2026-04-17T08:30:00Z' },
+  { id: 'al4', user_id: '2', user_name: 'James Chen', action: 'completed', entity_type: 'job', entity_id: 'j6', details: 'Marked Job #TN-1206 as Completed', created_at: '2026-04-16T17:00:00Z' },
+  { id: 'al5', user_id: '1', user_name: 'Rahul Mandal', action: 'created', entity_type: 'job', entity_id: 'j5', details: 'Created new Lead #TN-1205 for Robert Chang', created_at: '2026-04-14T13:00:00Z' },
+  { id: 'al6', user_id: '3', user_name: 'Sarah Mitchell', action: 'completed', entity_type: 'job', entity_id: 'j8', details: 'Marked Job #TN-1199 as Completed', created_at: '2026-04-12T16:00:00Z' },
+  { id: 'al7', user_id: '1', user_name: 'Rahul Mandal', action: 'lead_created', entity_type: 'job', entity_id: 'j2', details: 'Created Lead #TN-1202 for Emma Rodriguez', created_at: '2026-04-12T10:30:00Z' },
 ];
 
 // ──── Saved Versions ────
-export const mockSavedVersions: SavedVersion[] = [
-  { id: 'sv1', job_id: 'j1', user_name: 'Rahul Mandal', action: 'Job Created', created_at: '2026-04-10T08:00:00Z' },
-  { id: 'sv2', job_id: 'j1', user_name: 'Rahul Mandal', action: 'Lead Generated', created_at: '2026-04-10T08:30:00Z' },
-  { id: 'sv3', job_id: 'j1', user_name: 'Lisa Nguyen', action: 'Status changed to Work Order', created_at: '2026-04-12T09:15:00Z' },
-  { id: 'sv4', job_id: 'j1', user_name: 'Lisa Nguyen', action: 'Assigned to James Chen', created_at: '2026-04-12T09:20:00Z' },
-];
+export const mockSavedVersions: SavedVersion[] = [];
 
 // Helper to get today's jobs
 export function getTodaysJobs(): Job[] {

@@ -3,18 +3,20 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { ChevronDown, Printer, FileText, Receipt, MoreHorizontal, Loader2 } from 'lucide-react';
+import { ChevronDown, Printer, FileText, Receipt, MoreHorizontal, Loader2, Trash2 } from 'lucide-react';
 import { DetailsTab } from './details-tab';
 import { SavedTab } from './saved-tab';
 import { SiteVisitForm } from '../site-visit/SiteVisitForm';
 import { SiteVisitReport } from '../site-visit/SiteVisitReport';
 import { siteVisitService } from '@/lib/supabase/site-visit-service';
+import { jobService } from '@/lib/supabase/service';
 import { useAuth } from '@/components/providers/auth-provider';
+import { toast } from 'sonner';
 
 const TABS = [
   { id: 'details', label: 'Details' },
-  { id: 'site-visit', label: 'Site Visit' },
-  { id: 'saved', label: 'Saved' },
+  { id: 'site-visit', label: 'Assessment' },
+  { id: 'activity', label: 'Activity' },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
@@ -27,8 +29,43 @@ interface JobModalProps {
 }
 
 export function JobModal({ open, onOpenChange, jobId, onSuccess }: JobModalProps) {
+  const { user, profile } = useAuth();
   const [activeTab, setActiveTab] = useState<TabId>('details');
+  const [isDeleting, setIsDeleting] = useState(false);
   const isEditing = !!jobId;
+
+  const handleDelete = async () => {
+    if (!jobId || !user) return;
+    if (!confirm('Are you sure you want to delete this job? This action cannot be undone.')) return;
+
+    try {
+      setIsDeleting(true);
+      
+      // Fetch job number for logging
+      const job = await jobService.fetchJobById(jobId);
+      const jobNumber = job?.job_number || 'Unknown';
+
+      await jobService.deleteJob(jobId);
+      
+      // Log activity (system-wide)
+      await jobService.logActivity({
+        userId: user.id,
+        action: 'job_deleted',
+        entityType: 'job',
+        entityId: jobId,
+        details: `Deleted Job #${jobNumber}`
+      });
+
+      toast.success(`Job #${jobNumber} deleted successfully`);
+      onOpenChange(false);
+      onSuccess?.();
+    } catch (err) {
+      console.error('Failed to delete job:', err);
+      toast.error('Failed to delete job');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -58,6 +95,19 @@ export function JobModal({ open, onOpenChange, jobId, onSuccess }: JobModalProps
                   <DropdownMenuItem className="gap-2 cursor-pointer">
                     <Receipt className="w-4 h-4" /> Print Invoice
                   </DropdownMenuItem>
+                  {profile?.role === 'Admin' && isEditing && (
+                    <>
+                      <div className="h-px bg-light-gray my-1" />
+                      <DropdownMenuItem 
+                        onClick={handleDelete}
+                        disabled={isDeleting}
+                        className="gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/5"
+                      >
+                        <Trash2 className="w-4 h-4" /> 
+                        {isDeleting ? 'Deleting...' : 'Delete Job'}
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -72,13 +122,13 @@ export function JobModal({ open, onOpenChange, jobId, onSuccess }: JobModalProps
               onClick={() => setActiveTab(tab.id)}
               className={`flex-1 py-3 text-sm font-medium transition-all relative ${
                 activeTab === tab.id
-                  ? 'text-vision-green'
+                  ? 'text-primary'
                   : 'text-mid-gray hover:text-dark-gray'
               }`}
             >
               {tab.label}
               {activeTab === tab.id && (
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-vision-green rounded-t-full" />
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-t-full" />
               )}
             </button>
           ))}
@@ -92,16 +142,16 @@ export function JobModal({ open, onOpenChange, jobId, onSuccess }: JobModalProps
             }} />
           )}
           {activeTab === 'site-visit' && jobId && (
-            <SiteVisitTab jobId={jobId} />
+            <SiteVisitTab jobId={jobId} onSuccess={onSuccess} />
           )}
-          {activeTab === 'saved' && <SavedTab />}
+          {activeTab === 'activity' && <SavedTab jobId={jobId} />}
         </div>
       </DialogContent>
     </Dialog>
   );
 }
 
-function SiteVisitTab({ jobId }: { jobId: string }) {
+function SiteVisitTab({ jobId, onSuccess }: { jobId: string, onSuccess?: () => void }) {
   const { profile } = useAuth();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -122,10 +172,20 @@ function SiteVisitTab({ jobId }: { jobId: string }) {
     load();
   }, [jobId]);
 
+  const handleSuccess = async () => {
+    // 1. Reload the report data
+    const visit = await siteVisitService.fetchByJobId(jobId);
+    setData(visit);
+    setIsEditing(false); // Back to report view
+    
+    // 2. Trigger modal-level success
+    onSuccess?.();
+  };
+
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 text-vision-green animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }
@@ -135,10 +195,10 @@ function SiteVisitTab({ jobId }: { jobId: string }) {
     return (
       <div className="p-6 bg-off-white min-h-full space-y-4">
         <div className="max-w-4xl mx-auto flex justify-end">
-          {['Admin', 'Engineer', 'Technician'].includes(profile?.role || '') && (
+          {['Admin', 'Engineer', 'Technician', 'Dispatcher'].includes(profile?.role || '') && (
             <button 
               onClick={() => setIsEditing(true)}
-              className="text-xs font-bold text-vision-green hover:underline flex items-center gap-1.5"
+              className="text-xs font-bold text-primary hover:underline flex items-center gap-1.5"
             >
               Edit Assessment
             </button>
@@ -162,7 +222,9 @@ function SiteVisitTab({ jobId }: { jobId: string }) {
           </button>
         </div>
       )}
-      <SiteVisitForm jobId={jobId} />
+      <SiteVisitForm jobId={jobId} onSuccess={handleSuccess} />
     </div>
   );
 }
+
+

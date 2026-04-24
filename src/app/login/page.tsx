@@ -45,8 +45,12 @@ export default function LoginPage() {
         return;
       }
 
-      router.push('/dashboard');
-      router.refresh();
+      // Get the redirect URL from search params or default to dashboard
+      const params = new URLSearchParams(window.location.search);
+      const redirectTo = params.get('redirect') || '/dashboard';
+
+      // Use a hard redirect to ensure the session is picked up by middleware correctly on production
+      window.location.href = redirectTo;
     } catch {
       setError('Something went wrong. Please try again.');
     } finally {
@@ -120,7 +124,7 @@ export default function LoginPage() {
                 placeholder="name@tnsolar.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-11 bg-off-white border-light-gray focus:border-vision-green focus:ring-vision-green/20"
+                className="h-11 bg-off-white border-light-gray focus:border-primary focus:ring-primary/20"
                 autoComplete="email"
               />
             </div>
@@ -136,7 +140,7 @@ export default function LoginPage() {
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-11 bg-off-white border-light-gray focus:border-vision-green focus:ring-vision-green/20 pr-10"
+                  className="h-11 bg-off-white border-light-gray focus:border-primary focus:ring-primary/20 pr-10"
                   autoComplete="current-password"
                 />
                 <button
@@ -156,7 +160,7 @@ export default function LoginPage() {
                   id="remember-me"
                   checked={rememberMe}
                   onCheckedChange={(checked) => setRememberMe(checked === true)}
-                  className="border-light-gray data-[state=checked]:bg-vision-green data-[state=checked]:border-vision-green"
+                  className="border-light-gray data-[state=checked]:bg-primary data-[state=checked]:border-primary"
                 />
                 <label htmlFor="remember-me" className="text-sm text-dark-gray cursor-pointer select-none">
                   Remember me
@@ -164,7 +168,7 @@ export default function LoginPage() {
               </div>
               <button
                 type="button"
-                className="text-sm text-vision-green hover:text-green-dark font-medium transition-colors"
+                className="text-sm text-primary hover:text-primary-dark font-medium transition-colors"
               >
                 Forgot Password?
               </button>
@@ -173,7 +177,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-11 bg-solar-orange hover:bg-orange-light text-white font-semibold text-base shadow-lg shadow-solar-orange/25 transition-all duration-200 hover:shadow-xl hover:shadow-solar-orange/30 disabled:opacity-60"
+              className="w-full h-11 bg-secondary hover:bg-orange-light text-white font-semibold text-base shadow-lg shadow-secondary/25 transition-all duration-200 hover:shadow-xl hover:shadow-secondary/30 disabled:opacity-60"
             >
               {loading ? (
                 <div className="flex items-center gap-2">

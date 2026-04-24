@@ -16,10 +16,10 @@ function QueueJobCard({ job, onClick }: { job: Job; onClick: () => void }) {
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-xl border border-light-gray p-3.5 hover:shadow-md hover:border-vision-green/40 transition-all cursor-pointer group active:scale-[0.98]"
+      className="bg-white rounded-xl border border-light-gray p-3.5 hover:shadow-md hover:border-primary/40 transition-all cursor-pointer group active:scale-[0.98]"
     >
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-[10px] font-black text-vision-green uppercase tracking-wider">{job.job_number}</span>
+        <span className="text-[10px] font-black text-primary uppercase tracking-wider">{job.job_number}</span>
         <Badge variant="secondary" className="text-[9px] px-2 py-0.5 h-auto bg-off-white text-mid-gray border-none font-bold">
           {job.status}
         </Badge>
@@ -30,7 +30,7 @@ function QueueJobCard({ job, onClick }: { job: Job; onClick: () => void }) {
       <div className="flex items-center gap-1.5 mt-2">
         <MapPin className="w-3 h-3 text-mid-gray/50 shrink-0" />
         <p className="text-xs text-mid-gray truncate leading-tight flex-1">{job.address}</p>
-        <ChevronRight className="w-3.5 h-3.5 text-light-gray group-hover:text-vision-green transition-colors" />
+        <ChevronRight className="w-3.5 h-3.5 text-light-gray group-hover:text-primary transition-colors" />
       </div>
     </div>
   );
@@ -70,7 +70,7 @@ export function QueuesView({ onJobClick, refreshKey }: QueuesViewProps) {
       title: 'Parts',
       fullName: 'Parts on Order',
       icon: Package,
-      iconColor: 'text-solar-orange',
+      iconColor: 'text-secondary',
       iconBg: 'bg-orange-50',
       items: partsOnOrder,
     },
@@ -86,7 +86,7 @@ export function QueuesView({ onJobClick, refreshKey }: QueuesViewProps) {
       title: 'Service',
       fullName: 'Workshop / Service',
       icon: Wrench,
-      iconColor: 'text-vision-green',
+      iconColor: 'text-primary',
       iconBg: 'bg-green-50',
       items: workshop,
     },
@@ -95,7 +95,7 @@ export function QueuesView({ onJobClick, refreshKey }: QueuesViewProps) {
   if (loading || authLoading) {
     return (
       <div className="h-full flex items-center justify-center bg-off-white/30">
-        <Loader2 className="w-8 h-8 text-vision-green animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }
@@ -114,7 +114,7 @@ export function QueuesView({ onJobClick, refreshKey }: QueuesViewProps) {
                 onClick={() => setActiveQueue(i)}
                 className={`flex-1 flex items-center justify-center gap-2 px-2 py-2 rounded-lg transition-all ${
                   isActive 
-                    ? 'bg-vision-green text-white shadow-md' 
+                    ? 'bg-primary text-white shadow-md' 
                     : 'text-mid-gray hover:bg-off-white active:scale-95'
                 }`}
               >

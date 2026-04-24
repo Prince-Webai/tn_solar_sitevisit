@@ -1,4 +1,4 @@
--- VisionSolar Job Manager - Database Schema
+-- TN Solar Job Manager - Database Schema
 -- Run in Supabase SQL Editor to create all tables
 
 -- ===========================

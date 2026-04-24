@@ -12,7 +12,7 @@ function JobCard({ job }: { job: Job }) {
   const isQuoteType =
     ['Quote', 'Quote Sent', 'Lead', 'Site Assessment'].includes(job.status) ||
     job.category === 'Site Assessment';
-  const borderColor = isQuoteType ? 'border-l-solar-orange' : 'border-l-blue-500';
+  const borderColor = isQuoteType ? 'border-l-secondary' : 'border-l-blue-500';
 
   const handleDragStart = (e: React.DragEvent) => {
     // Set the job ID so the drop target can read it
@@ -31,7 +31,7 @@ function JobCard({ job }: { job: Job }) {
         <GripVertical className="w-4 h-4 text-light-gray mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-semibold text-vision-green">{job.job_number}</span>
+            <span className="text-xs font-semibold text-primary">{job.job_number}</span>
             {job.estimated_hours && (
               <Badge variant="secondary" className="text-[10px] bg-off-white text-dark-gray px-1.5 py-0 h-5">
                 <Clock className="w-2.5 h-2.5 mr-1" />
@@ -128,7 +128,7 @@ export function UnscheduledJobs({ refreshKey }: UnscheduledJobsProps) {
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-6 h-6 text-vision-green animate-spin" />
+            <Loader2 className="w-6 h-6 text-primary animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-10">

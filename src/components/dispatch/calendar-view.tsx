@@ -59,8 +59,8 @@ function MiniCalendar({ selectedDate, onSelect }: { selectedDate: Date; onSelect
               key={day}
               onClick={() => onSelect(date)}
               className={`py-1 rounded-md text-[10px] transition-all ${
-                isSelected ? 'bg-vision-green text-white font-bold'
-                : isToday ? 'bg-solar-orange/20 text-solar-orange font-bold ring-1 ring-solar-orange'
+                isSelected ? 'bg-primary text-white font-bold'
+                : isToday ? 'bg-secondary/20 text-secondary font-bold ring-1 ring-secondary'
                 : isWeekend ? 'text-mid-gray hover:bg-off-white'
                 : 'text-charcoal hover:bg-off-white'
               }`}
@@ -70,7 +70,7 @@ function MiniCalendar({ selectedDate, onSelect }: { selectedDate: Date; onSelect
           );
         })}
       </div>
-      <button onClick={() => onSelect(new Date())} className="w-full text-center text-xs text-vision-green font-medium mt-2 hover:underline">Today</button>
+      <button onClick={() => onSelect(new Date())} className="w-full text-center text-xs text-primary font-medium mt-2 hover:underline">Today</button>
     </div>
   );
 }
@@ -122,7 +122,7 @@ export function CalendarView({ refreshKey, onJobClick }: { refreshKey?: number; 
               <button onClick={prevDay} className="p-1.5 rounded-md hover:bg-white hover:shadow-sm transition-all active:scale-90"><ChevronLeft className="w-4 h-4 text-dark-gray" /></button>
               <Popover>
                 <PopoverTrigger className="px-2 py-1.5 text-xs font-bold text-charcoal flex items-center gap-1.5 hover:bg-white rounded-md transition-all">
-                  <CalendarIcon className="w-3.5 h-3.5 text-vision-green" />
+                  <CalendarIcon className="w-3.5 h-3.5 text-primary" />
                   <span className="hidden xs:inline">{dayLabelFull}</span>
                   <span className="xs:hidden">{dayLabelShort}</span>
                 </PopoverTrigger>
@@ -132,7 +132,7 @@ export function CalendarView({ refreshKey, onJobClick }: { refreshKey?: number; 
               </Popover>
               <button onClick={nextDay} className="p-1.5 rounded-md hover:bg-white hover:shadow-sm transition-all active:scale-90"><ChevronRight className="w-4 h-4 text-dark-gray" /></button>
             </div>
-            <button onClick={() => setSelectedDate(new Date())} className="text-[10px] uppercase tracking-wider font-bold text-vision-green bg-vision-green/5 border border-vision-green/20 px-3 py-2 rounded-lg hover:bg-vision-green hover:text-white transition-all active:scale-95">Today</button>
+            <button onClick={() => setSelectedDate(new Date())} className="text-[10px] uppercase tracking-wider font-bold text-primary bg-primary/5 border border-primary/20 px-3 py-2 rounded-lg hover:bg-primary hover:text-white transition-all active:scale-95">Today</button>
           </div>
 
           <div className="flex items-center overflow-x-auto no-scrollbar bg-off-white rounded-lg p-1 border border-light-gray/60 w-full sm:w-auto justify-between sm:justify-start">
@@ -141,7 +141,7 @@ export function CalendarView({ refreshKey, onJobClick }: { refreshKey?: number; 
                 key={v} 
                 onClick={() => setView(v)}
                 className={`flex-1 sm:flex-none px-3 py-1.5 text-[10px] font-bold uppercase tracking-tight rounded-md transition-all whitespace-nowrap ${
-                  view === v ? 'bg-white text-vision-green shadow-sm ring-1 ring-black/5' : 'text-mid-gray hover:text-charcoal'
+                  view === v ? 'bg-white text-primary shadow-sm ring-1 ring-black/5' : 'text-mid-gray hover:text-charcoal'
                 }`}
               >
                 {v}
@@ -154,7 +154,7 @@ export function CalendarView({ refreshKey, onJobClick }: { refreshKey?: number; 
         <div className="flex-1 overflow-y-auto bg-white relative no-scrollbar">
           {loading && (
             <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/50 backdrop-blur-[2px]">
-              <Loader2 className="w-8 h-8 text-vision-green animate-spin" />
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
             </div>
           )}
 
@@ -165,7 +165,7 @@ export function CalendarView({ refreshKey, onJobClick }: { refreshKey?: number; 
               return (
                 <div key={hour} className="flex border-b border-light-gray/40 h-[72px] group">
                   <div className="w-14 md:w-20 shrink-0 pr-3 md:pr-4 flex items-start justify-end pt-3 bg-off-white/20">
-                    <span className="text-[10px] md:text-xs font-black text-mid-gray/40 uppercase tracking-tighter transition-colors group-hover:text-vision-green">{label}</span>
+                    <span className="text-[10px] md:text-xs font-black text-mid-gray/40 uppercase tracking-tighter transition-colors group-hover:text-primary">{label}</span>
                   </div>
                   <div className="flex-1 border-l border-light-gray/40 transition-colors group-hover:bg-off-white/10" />
                 </div>
@@ -191,15 +191,15 @@ export function CalendarView({ refreshKey, onJobClick }: { refreshKey?: number; 
                     key={job.id}
                     onClick={() => onJobClick?.(job.id)}
                     className={`absolute left-16 md:left-24 right-3 md:right-8 rounded-xl p-3 shadow-lg border z-10 cursor-pointer transition-all hover:scale-[1.01] active:scale-[0.98] group/job overflow-hidden
-                      ${isQuote ? 'bg-solar-orange/10 border-solar-orange/30 shadow-solar-orange/5' : 'bg-blue-50 border-blue-200 shadow-blue-500/5'}`}
+                      ${isQuote ? 'bg-secondary/10 border-secondary/30 shadow-secondary/5' : 'bg-blue-50 border-blue-200 shadow-blue-500/5'}`}
                     style={{ top: top + 3, height }}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className={`text-xs font-black uppercase tracking-tight truncate ${isQuote ? 'text-orange-dark' : 'text-blue-800'}`}>
+                        <p className={`text-xs font-black uppercase tracking-tight truncate ${isQuote ? 'text-secondary-dark' : 'text-blue-800'}`}>
                           {job.client?.first_name} {job.client?.last_name}
                         </p>
-                        <p className={`text-[10px] font-bold truncate opacity-80 mt-0.5 ${isQuote ? 'text-solar-orange' : 'text-blue-600'}`}>
+                        <p className={`text-[10px] font-bold truncate opacity-80 mt-0.5 ${isQuote ? 'text-secondary' : 'text-blue-600'}`}>
                           {job.job_number}
                         </p>
                       </div>
@@ -215,7 +215,7 @@ export function CalendarView({ refreshKey, onJobClick }: { refreshKey?: number; 
 
                     {job.assigned_to && (
                        <div className="absolute bottom-2 right-3 flex items-center gap-1.5 bg-white/40 backdrop-blur-sm px-2 py-0.5 rounded-full border border-white/50">
-                         <div className="w-1 h-1 rounded-full bg-vision-green animate-pulse" />
+                         <div className="w-1 h-1 rounded-full bg-primary animate-pulse" />
                          <span className="text-[9px] font-black uppercase tracking-tighter text-dark-gray/70">Assigned</span>
                        </div>
                     )}

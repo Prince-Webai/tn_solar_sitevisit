@@ -72,7 +72,10 @@ export function StaffScheduleView({ onJobClick, refreshKey, onScheduleUpdate }: 
 
   useEffect(() => {
     async function loadData() {
-      if (!user || !profile) return;
+      if (!user || !profile) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       try {
         const jobsData = await jobService.fetchJobs({
@@ -80,17 +83,19 @@ export function StaffScheduleView({ onJobClick, refreshKey, onScheduleUpdate }: 
           userId: user.id
         });
         
-        let profilesQuery = supabase.from('profiles').select('*').in('role', ['Technician', 'Engineer']);
+        let profilesQuery = supabase.from('profiles').select('*').in('role', ['Technician', 'Engineer', 'Sales', 'Dispatcher', 'Admin']);
         
         if (profile.role === 'Engineer' || profile.role === 'Technician') {
           profilesQuery = profilesQuery.eq('id', user.id);
         }
 
-        const profilesResponse = await profilesQuery;
+        const { data: profilesData, error: profilesError } = await profilesQuery;
         
+        if (profilesError) throw profilesError;
+
         setJobs(jobsData);
         const seen = new Set();
-        const unique = (profilesResponse.data || []).filter((p: any) => {
+        const unique = (profilesData || []).filter((p: any) => {
           if (seen.has(p.id)) return false;
           seen.add(p.id);
           return true;
@@ -161,7 +166,21 @@ export function StaffScheduleView({ onJobClick, refreshKey, onScheduleUpdate }: 
     }
 
     try {
-      await jobService.assignJob(jobId, staffId, scheduledDate.toISOString());
+      const assignedJob = await jobService.assignJob(jobId, staffId, scheduledDate.toISOString());
+      
+      // Log activity
+      if (user) {
+        // Find staff name
+        const staff = staffMembers.find(s => s.id === staffId);
+        await jobService.logActivity({
+          userId: user.id,
+          action: 'assigned',
+          entityType: 'job',
+          entityId: jobId,
+          details: `Allocated to ${staff?.full_name || 'Staff member'} for ${col.label}`
+        });
+      }
+
       setJobs(await jobService.fetchJobs());
       toast.success(`Assigned at ${col.label}`);
       onScheduleUpdate?.();
@@ -209,7 +228,7 @@ export function StaffScheduleView({ onJobClick, refreshKey, onScheduleUpdate }: 
   if (loading || authLoading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-vision-green animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }
@@ -227,7 +246,7 @@ export function StaffScheduleView({ onJobClick, refreshKey, onScheduleUpdate }: 
             </button>
             <Popover>
               <PopoverTrigger className="px-2 py-1.5 text-xs font-bold text-charcoal flex items-center gap-1.5 hover:bg-white rounded-md transition-all">
-                <CalendarIcon className="w-3.5 h-3.5 text-vision-green" />
+                <CalendarIcon className="w-3.5 h-3.5 text-primary" />
                 <span className="hidden xs:inline">{dateLabelFull}</span>
                 <span className="xs:hidden">{dateLabelShort}</span>
               </PopoverTrigger>
@@ -239,7 +258,7 @@ export function StaffScheduleView({ onJobClick, refreshKey, onScheduleUpdate }: 
               <ChevronRight className="w-4 h-4 text-dark-gray" />
             </button>
           </div>
-          <button onClick={goToday} className="text-[10px] uppercase tracking-wider font-bold text-vision-green bg-vision-green/5 border border-vision-green/20 px-3 py-2 rounded-lg hover:bg-vision-green hover:text-white transition-all active:scale-95">
+          <button onClick={goToday} className="text-[10px] uppercase tracking-wider font-bold text-primary bg-primary/5 border border-primary/20 px-3 py-2 rounded-lg hover:bg-primary hover:text-white transition-all active:scale-95">
             Today
           </button>
         </div>
@@ -251,7 +270,7 @@ export function StaffScheduleView({ onJobClick, refreshKey, onScheduleUpdate }: 
               key={v} 
               onClick={() => setView(v)}
               className={`flex-1 sm:flex-none px-3 py-1.5 text-[10px] font-bold uppercase tracking-tight rounded-md transition-all whitespace-nowrap ${
-                view === v ? 'bg-white text-vision-green shadow-sm ring-1 ring-black/5' : 'text-mid-gray hover:text-charcoal'
+                view === v ? 'bg-white text-primary shadow-sm ring-1 ring-black/5' : 'text-mid-gray hover:text-charcoal'
               }`}
             >
               {v}
@@ -271,7 +290,7 @@ export function StaffScheduleView({ onJobClick, refreshKey, onScheduleUpdate }: 
             </div>
             {columns.map((col, i) => (
               <div key={i} style={{ width: COL_WIDTH }} className="shrink-0 px-2 flex items-center justify-center border-r border-light-gray bg-off-white/50 text-center">
-                <span className={`text-[10px] font-bold tracking-tight ${col.date.toDateString() === new Date().toDateString() ? 'text-solar-orange' : 'text-mid-gray'}`}>
+                <span className={`text-[10px] font-bold tracking-tight ${col.date.toDateString() === new Date().toDateString() ? 'text-secondary' : 'text-mid-gray'}`}>
                   {col.label}
                 </span>
               </div>
@@ -288,12 +307,12 @@ export function StaffScheduleView({ onJobClick, refreshKey, onScheduleUpdate }: 
                 {/* Staff Info (Sticky Left) */}
                 <div style={{ width: STAFF_COL_W }} className="shrink-0 px-2 py-3 border-r border-light-gray bg-white sticky left-0 z-20 shadow-[2px_0_8px_rgba(0,0,0,0.02)] flex flex-col items-center justify-center gap-1 group-hover/row:bg-off-white/30 transition-colors">
                   <Avatar className="w-8 h-8 shrink-0 ring-2 ring-off-white">
-                    <AvatarFallback className="bg-vision-green text-white text-[10px] font-black uppercase">
+                    <AvatarFallback className="bg-primary text-white text-[10px] font-black uppercase">
                       {staff.full_name.split(' ').map((n: string) => n[0]).join('')}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-[10px] font-bold text-charcoal truncate w-full text-center px-1">
-                    {staff.full_name.split(' ')[0]}
+                  <span className="text-[9px] font-bold text-charcoal w-full text-center px-1 leading-tight line-clamp-2">
+                    {staff.full_name}
                   </span>
                 </div>
 
@@ -312,7 +331,7 @@ export function StaffScheduleView({ onJobClick, refreshKey, onScheduleUpdate }: 
                         key={i}
                         style={{ width: COL_WIDTH }}
                         className={`h-full border-r border-light-gray/50 shrink-0 transition-colors ${
-                          isOver && dragSlot === i ? 'bg-vision-green/10' : ''
+                          isOver && dragSlot === i ? 'bg-primary/10' : ''
                         }`}
                       />
                     ))}
@@ -321,7 +340,7 @@ export function StaffScheduleView({ onJobClick, refreshKey, onScheduleUpdate }: 
                   {/* Hover indicator */}
                   {isOver && dragSlot !== null && (
                     <div
-                      className={`absolute top-0 bottom-0 pointer-events-none z-10 ${isTimeView ? 'w-0.5 bg-vision-green' : 'bg-vision-green/10'}`}
+                      className={`absolute top-0 bottom-0 pointer-events-none z-10 ${isTimeView ? 'w-0.5 bg-primary' : 'bg-primary/10'}`}
                       style={{ left: dragSlot * COL_WIDTH, width: isTimeView ? 2 : COL_WIDTH }}
                     />
                   )}
@@ -337,15 +356,15 @@ export function StaffScheduleView({ onJobClick, refreshKey, onScheduleUpdate }: 
                       <div
                         key={job.id}
                         className={`absolute top-1.5 h-[52px] overflow-hidden rounded-lg cursor-pointer group/block z-20 shadow-sm border transition-all hover:scale-[1.02] active:scale-95
-                          ${isQuote ? 'bg-solar-orange/10 border-solar-orange/30' : 'bg-blue-50 border-blue-200'}`}
+                          ${isQuote ? 'bg-secondary/10 border-secondary/30' : 'bg-blue-50 border-blue-200'}`}
                         style={{ left: si * COL_WIDTH + 4, width: dur * COL_WIDTH - 8 }}
                         onClick={() => onJobClick(job.id)}
                       >
                         <div className="px-2.5 h-full flex flex-col justify-center overflow-hidden">
-                          <p className={`text-[10px] font-black truncate uppercase tracking-tight ${isQuote ? 'text-orange-dark' : 'text-blue-700'}`}>
+                          <p className={`text-[10px] font-black truncate uppercase tracking-tight ${isQuote ? 'text-secondary-dark' : 'text-blue-700'}`}>
                             {job.client?.first_name}
                           </p>
-                          <p className={`text-[9px] font-bold truncate opacity-80 ${isQuote ? 'text-solar-orange' : 'text-blue-500'}`}>
+                          <p className={`text-[9px] font-bold truncate opacity-80 ${isQuote ? 'text-secondary' : 'text-blue-500'}`}>
                             {job.job_number}
                           </p>
                         </div>

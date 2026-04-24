@@ -76,7 +76,7 @@ export function WeatherWidget() {
   return (
     <Card className="card-hover border-light-gray overflow-hidden">
       {showWarning && (
-        <div className="bg-solar-orange text-white px-4 py-2.5 flex items-center gap-2 text-sm font-medium">
+        <div className="bg-secondary text-white px-4 py-2.5 flex items-center gap-2 text-sm font-medium">
           <AlertTriangle className="w-4 h-4 shrink-0" />
           <span>⚠️ Weather Alert: Roof work may be impacted. Review dispatch schedule.</span>
         </div>
@@ -91,7 +91,7 @@ export function WeatherWidget() {
             </div>
           </div>
           <div className="w-14 h-14 rounded-xl bg-accent flex items-center justify-center">
-            <WeatherIcon className="w-8 h-8 text-vision-green" />
+            <WeatherIcon className="w-8 h-8 text-primary" />
           </div>
         </div>
         <div className="flex items-center gap-4 text-sm text-dark-gray">
