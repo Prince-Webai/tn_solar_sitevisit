@@ -33,22 +33,29 @@ export default function SettingsPage() {
   async function fetchUsers() {
     setLoading(true);
     try {
+      // 1. Try to fetch from Admin API (needed for some advanced data)
       const res = await fetch('/api/admin/users');
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error);
-
-      // Map auth user emails to profiles via the profiles table directly
+      
+      // 2. Regardless of API success, always fetch from the public profiles table
+      // This ensures the list shows up even if the Admin Key is missing on Netlify
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();
-      const { data: profiles } = await supabase
+      const { data: profiles, error: profileError } = await supabase
         .from('profiles')
         .select('*')
         .order('full_name');
 
+      if (profileError) throw profileError;
       setUsers(profiles || []);
+
+      if (!res.ok) {
+        console.warn('Admin API restricted:', json.error);
+        // We don't toast error here because we successfully loaded profiles at least
+      }
     } catch (error) {
       console.error('Error fetching users:', error);
-      toast.error('Failed to load team members');
+      toast.error('Failed to load team members. Please check database permissions.');
     } finally {
       setLoading(false);
     }
