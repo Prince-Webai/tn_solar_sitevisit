@@ -5,9 +5,5 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-[functions]
-  node_version = "20"
-
 [build.environment]
   NODE_VERSION = "20"
-  NPM_FLAGS = "--version"
