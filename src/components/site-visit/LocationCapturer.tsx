@@ -50,12 +50,12 @@ export function LocationCapturer({ onCapture, value }: LocationCapturerProps) {
           onClick={handleCapture}
           disabled={loading}
           variant="outline"
-          className="w-full h-12 gap-2 border-dashed border-2 hover:border-vision-green hover:bg-vision-green/5"
+          className="w-full h-12 gap-2 border-dashed border-2 hover:border-primary hover:bg-primary/5"
         >
           {loading ? (
-            <Loader2 className="w-4 h-4 animate-spin text-vision-green" />
+            <Loader2 className="w-4 h-4 animate-spin text-primary" />
           ) : (
-            <MapPin className="w-4 h-4 text-vision-green" />
+            <MapPin className="w-4 h-4 text-primary" />
           )}
           {t('capture_location')}
         </Button>

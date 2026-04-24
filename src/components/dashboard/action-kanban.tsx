@@ -20,10 +20,10 @@ function KanbanCard({ jobNumber, clientName, address, badge, badgeColor = 'bg-gr
   return (
     <button
       onClick={onClick}
-      className="w-full text-left p-3 bg-white rounded-lg border border-light-gray hover:border-vision-green/50 hover:shadow-sm transition-all duration-200 group"
+      className="w-full text-left p-3 bg-white rounded-lg border border-light-gray hover:border-primary/50 hover:shadow-sm transition-all duration-200 group"
     >
       <div className="flex items-center justify-between mb-1.5">
-        <span className="text-xs font-semibold text-vision-green">{jobNumber}</span>
+        <span className="text-xs font-semibold text-primary">{jobNumber}</span>
         {badge && (
           <Badge variant="secondary" className={`text-[10px] px-1.5 py-0 ${badgeColor}`}>
             {badge}
@@ -32,7 +32,7 @@ function KanbanCard({ jobNumber, clientName, address, badge, badgeColor = 'bg-gr
       </div>
       <p className="text-sm font-medium text-charcoal truncate">{clientName}</p>
       <p className="text-xs text-mid-gray truncate mt-0.5">{address}</p>
-      <div className="mt-2 flex items-center text-xs text-mid-gray group-hover:text-vision-green transition-colors">
+      <div className="mt-2 flex items-center text-xs text-mid-gray group-hover:text-primary transition-colors">
         <span>View details</span>
         <ArrowRight className="w-3 h-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
       </div>
@@ -51,7 +51,10 @@ export function ActionKanban({ onJobClick }: ActionKanbanProps) {
 
   useEffect(() => {
     async function loadData() {
-      if (!user || !profile) return;
+      if (!user || !profile) {
+        setLoading(false);
+        return;
+      }
       try {
         const data = await jobService.fetchJobs({ 
           role: profile.role, 
@@ -67,10 +70,21 @@ export function ActionKanban({ onJobClick }: ActionKanbanProps) {
     if (!authLoading) loadData();
   }, [user, profile, authLoading]);
 
-  if (loading || authLoading) {
+  if (authLoading) {
     return (
       <Card className="border-light-gray h-[400px] flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-vision-green animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      </Card>
+    );
+  }
+
+  if (loading) {
+     return (
+      <Card className="border-light-gray h-[400px] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+          <p className="text-[10px] font-black text-mid-gray uppercase tracking-widest">Loading Tasks...</p>
+        </div>
       </Card>
     );
   }
@@ -87,11 +101,11 @@ export function ActionKanban({ onJobClick }: ActionKanbanProps) {
     {
       title: 'Parts to Order',
       icon: Package,
-      iconColor: 'text-solar-orange',
+      iconColor: 'text-secondary',
       iconBg: 'bg-orange-50',
       items: partsToOrder,
       badgeText: 'Pending',
-      badgeColor: 'bg-solar-orange/15 text-orange-dark',
+      badgeColor: 'bg-secondary/15 text-secondary-dark',
     },
     {
       title: 'Pending Assessments',
@@ -134,8 +148,8 @@ export function ActionKanban({ onJobClick }: ActionKanbanProps) {
                       <KanbanCard
                         key={job.id}
                         jobNumber={job.job_number}
-                        clientName={`${job.client?.first_name} ${job.client?.last_name}`}
-                        address={job.address}
+                        clientName={`${job.client?.first_name || 'N/A'} ${job.client?.last_name || ''}`}
+                        address={job.address || 'No address'}
                         badge={col.badgeText}
                         badgeColor={col.badgeColor}
                         onClick={() => onJobClick?.(job.id)}

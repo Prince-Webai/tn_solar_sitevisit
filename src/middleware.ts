@@ -34,27 +34,6 @@ export async function middleware(request: NextRequest) {
   const publicRoutes = ['/login', '/api'];
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
 
-  // Role-based access control
-  if (user && !isPublicRoute) {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
-
-    const role = profile?.role;
-
-    // Dispatch Board: Admin, Dispatcher, Sales, Engineer all have access
-    if (pathname.startsWith('/dispatch') && !['Admin', 'Dispatcher', 'Sales', 'Engineer', 'Technician'].includes(role)) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
-
-    // History: everyone except unknown roles
-    if (pathname.startsWith('/history') && !['Admin', 'Dispatcher', 'Sales', 'Engineer', 'Technician'].includes(role)) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
-  }
-
   // Redirect root to dashboard
   if (pathname === '/') {
     if (!user) {

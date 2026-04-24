@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { jobService } from '@/lib/supabase/service';
+import { useAuth } from '@/components/providers/auth-provider';
 import { toast } from 'sonner';
 import {
   User,
@@ -43,6 +44,7 @@ const EMPTY_FORM: FormData = {
 };
 
 export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteVisitDialogProps) {
+  const { user } = useAuth();
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -79,15 +81,28 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
 
       // 2. Create the job as a Site Assessment
       const job = await jobService.createJob({
-        client_id:     client.id,
-        address:       form.address.trim(),
-        status:        'Lead' as any,
-        category:      'Site Assessment' as any,
-        description:   form.notes.trim() || 'Site visit booked by sales',
-        contact_name:  `${form.firstName} ${form.lastName}`.trim(),
-        contact_email: form.email.trim(),
-        contact_phone: form.phone.trim(),
+        client_id:           client.id,
+        address:             form.address.trim(),
+        status:              'Lead' as any,
+        category:            'Site Assessment' as any,
+        description:         form.notes.trim() || 'Site visit booked by sales',
+        contact_name:        `${form.firstName} ${form.lastName}`.trim(),
+        contact_email:       form.email.trim(),
+        contact_phone:       form.phone.trim(),
+        requires_site_visit: true,
+        materials_status:    'Pending'
       });
+
+      // 3. Log activity
+      if (user) {
+        await jobService.logActivity({
+          userId: user.id,
+          action: 'job_created',
+          entityType: 'job',
+          entityId: job.id,
+          details: `Site Visit booked for ${form.firstName} ${form.lastName} by sales team.`
+        });
+      }
 
       setJobNumber(job.job_number);
       setDone(true);
@@ -107,13 +122,13 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
         {/* ── Success State ── */}
         {done ? (
           <div className="flex flex-col items-center justify-center py-16 px-8 text-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-green-50 border-2 border-vision-green/30 flex items-center justify-center">
-              <CheckCircle2 className="w-9 h-9 text-vision-green" />
+            <div className="w-16 h-16 rounded-full bg-blue-50 border-2 border-primary/30 flex items-center justify-center">
+              <CheckCircle2 className="w-9 h-9 text-primary" />
             </div>
             <div>
               <p className="text-xl font-bold text-charcoal">Site Visit Booked!</p>
               <p className="text-sm text-mid-gray mt-1">
-                Job <span className="font-semibold text-vision-green">{jobNumber}</span> has been created.
+                Job <span className="font-semibold text-primary">{jobNumber}</span> has been created.
               </p>
               <p className="text-xs text-mid-gray mt-1">
                 Head to the <strong>Dispatch Board</strong> to allocate an engineer.
@@ -132,7 +147,7 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
                   handleClose(false);
                   window.location.href = '/dispatch';
                 }}
-                className="bg-vision-green hover:bg-green-dark text-white gap-1.5"
+                className="bg-primary hover:bg-primary-dark text-white gap-1.5"
               >
                 Go to Dispatch Board <ChevronRight className="w-4 h-4" />
               </Button>
@@ -141,10 +156,10 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
         ) : (
           <>
             {/* ── Header ── */}
-            <DialogHeader className="px-6 pt-6 pb-4 border-b border-light-gray bg-gradient-to-r from-vision-green/5 to-transparent">
+            <DialogHeader className="px-6 pt-6 pb-4 border-b border-light-gray bg-gradient-to-r from-primary/5 to-transparent">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-vision-green/10 flex items-center justify-center">
-                  <ClipboardList className="w-5 h-5 text-vision-green" />
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                  <ClipboardList className="w-5 h-5 text-primary" />
                 </div>
                 <div>
                   <DialogTitle className="text-lg font-bold text-charcoal">Book Site Visit</DialogTitle>
@@ -159,7 +174,7 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
               {/* Customer Name */}
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-charcoal flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-vision-green" />
+                  <User className="w-3.5 h-3.5 text-primary" />
                   Customer Name <span className="text-red-500">*</span>
                 </label>
                 <div className="grid grid-cols-2 gap-3">
@@ -168,14 +183,14 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
                     placeholder="First name"
                     value={form.firstName}
                     onChange={set('firstName')}
-                    className="h-10 bg-off-white border-light-gray focus:border-vision-green/50"
+                    className="h-10 bg-off-white border-light-gray focus:border-primary/50"
                   />
                   <Input
                     id="sv-last-name"
                     placeholder="Last name"
                     value={form.lastName}
                     onChange={set('lastName')}
-                    className="h-10 bg-off-white border-light-gray focus:border-vision-green/50"
+                    className="h-10 bg-off-white border-light-gray focus:border-primary/50"
                   />
                 </div>
               </div>
@@ -183,7 +198,7 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
               {/* Phone */}
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-charcoal flex items-center gap-1.5">
-                  <Phone className="w-3.5 h-3.5 text-vision-green" />
+                  <Phone className="w-3.5 h-3.5 text-primary" />
                   Phone Number <span className="text-red-500">*</span>
                 </label>
                 <Input
@@ -192,7 +207,7 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
                   placeholder="e.g. 98765 43210"
                   value={form.phone}
                   onChange={set('phone')}
-                  className="h-10 bg-off-white border-light-gray focus:border-vision-green/50"
+                  className="h-10 bg-off-white border-light-gray focus:border-primary/50"
                 />
               </div>
 
@@ -208,14 +223,14 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
                   placeholder="customer@email.com"
                   value={form.email}
                   onChange={set('email')}
-                  className="h-10 bg-off-white border-light-gray focus:border-vision-green/50"
+                  className="h-10 bg-off-white border-light-gray focus:border-primary/50"
                 />
               </div>
 
               {/* Site Address */}
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-charcoal flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-vision-green" />
+                  <MapPin className="w-3.5 h-3.5 text-primary" />
                   Site Address <span className="text-red-500">*</span>
                 </label>
                 <Input
@@ -223,7 +238,7 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
                   placeholder="Enter the full site address"
                   value={form.address}
                   onChange={set('address')}
-                  className="h-10 bg-off-white border-light-gray focus:border-vision-green/50"
+                  className="h-10 bg-off-white border-light-gray focus:border-primary/50"
                 />
               </div>
 
@@ -237,7 +252,7 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
                   placeholder="Any special requirements or notes..."
                   value={form.notes}
                   onChange={set('notes')}
-                  className="min-h-[80px] bg-off-white border-light-gray focus:border-vision-green/50 resize-none"
+                  className="min-h-[80px] bg-off-white border-light-gray focus:border-primary/50 resize-none"
                 />
               </div>
             </div>
@@ -256,7 +271,7 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
                 id="sv-submit"
                 onClick={handleSubmit}
                 disabled={loading}
-                className="flex-1 bg-vision-green hover:bg-green-dark text-white font-semibold shadow-md shadow-vision-green/20 gap-2"
+                className="flex-1 bg-primary hover:bg-primary-dark text-white font-semibold shadow-md shadow-primary/20 gap-2"
               >
                 {loading ? (
                   <><Loader2 className="w-4 h-4 animate-spin" /> Booking...</>

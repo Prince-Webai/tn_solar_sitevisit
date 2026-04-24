@@ -86,7 +86,7 @@ export function HistoryFilters({
               <Filter className="w-4 h-4 text-mid-gray" />
               Status
               {statusFilter.length > 0 && (
-                <Badge className="bg-vision-green text-white text-[10px] px-1.5 py-0 h-4 ml-1">
+                <Badge className="bg-primary text-white text-[10px] px-1.5 py-0 h-4 ml-1">
                   {statusFilter.length}
                 </Badge>
               )}
@@ -97,11 +97,11 @@ export function HistoryFilters({
                 key={status}
                 onClick={() => toggleStatus(status)}
                 className={`w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors ${
-                  statusFilter.includes(status) ? 'bg-accent text-green-dark' : 'hover:bg-off-white text-dark-gray'
+                  statusFilter.includes(status) ? 'bg-accent text-primary-dark' : 'hover:bg-off-white text-dark-gray'
                 }`}
               >
                 <div className={`w-3.5 h-3.5 rounded border ${
-                  statusFilter.includes(status) ? 'bg-vision-green border-vision-green' : 'border-light-gray'
+                  statusFilter.includes(status) ? 'bg-primary border-primary' : 'border-light-gray'
                 } flex items-center justify-center`}>
                   {statusFilter.includes(status) && (
                     <svg viewBox="0 0 12 12" className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" strokeWidth="2">

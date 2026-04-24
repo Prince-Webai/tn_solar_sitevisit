@@ -11,13 +11,13 @@
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-sans);
 
-  /* Brand Colors */
-  --color-vision-green: #5C8F5A;
-  --color-green-light: #7BAE79;
-  --color-green-dark: #3D6E3B;
-  --color-solar-orange: #E3A25B;
-  --color-orange-light: #F0BC8A;
-  --color-orange-dark: #C47E3E;
+  /* Brand Colors - TN Solar */
+  --color-primary: #1E40AF; /* Solar Blue */
+  --color-primary-light: #3B82F6;
+  --color-primary-dark: #1E3A8A;
+  --color-secondary: #F59E0B; /* Solar Gold */
+  --color-secondary-light: #FBBF24;
+  --color-secondary-dark: #B45309;
 
   /* Neutrals */
   --color-off-white: #F9FAFB;
@@ -72,32 +72,32 @@
   --card-foreground: #1F2937;
   --popover: #FFFFFF;
   --popover-foreground: #1F2937;
-  --primary: #5C8F5A;
+  --primary: #1E40AF;
   --primary-foreground: #FFFFFF;
-  --secondary: #E3A25B;
+  --secondary: #F59E0B;
   --secondary-foreground: #FFFFFF;
   --muted: #F3F4F6;
   --muted-foreground: #9CA3AF;
-  --accent: #F0FDF4;
-  --accent-foreground: #3D6E3B;
+  --accent: #EFF6FF;
+  --accent-foreground: #1E40AF;
   --destructive: #EF4444;
   --border: #E5E7EB;
   --input: #E5E7EB;
-  --ring: #5C8F5A;
-  --chart-1: #5C8F5A;
-  --chart-2: #E3A25B;
-  --chart-3: #7BAE79;
-  --chart-4: #F0BC8A;
-  --chart-5: #3D6E3B;
+  --ring: #1E40AF;
+  --chart-1: #1E40AF;
+  --chart-2: #F59E0B;
+  --chart-3: #3B82F6;
+  --chart-4: #FBBF24;
+  --chart-5: #1E3A8A;
   --radius: 0.625rem;
   --sidebar: #FFFFFF;
   --sidebar-foreground: #4B5563;
-  --sidebar-primary: #5C8F5A;
+  --sidebar-primary: #1E40AF;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F0FDF4;
-  --sidebar-accent-foreground: #3D6E3B;
+  --sidebar-accent: #EFF6FF;
+  --sidebar-accent-foreground: #1E40AF;
   --sidebar-border: #E5E7EB;
-  --sidebar-ring: #5C8F5A;
+  --sidebar-ring: #1E40AF;
 }
 
 @layer base {
@@ -114,15 +114,15 @@
 
 /* Brand Gradient */
 .brand-gradient {
-  background: linear-gradient(135deg, #5C8F5A 0%, #3D6E3B 30%, #E3A25B 100%);
+  background: linear-gradient(135deg, #1E40AF 0%, #1E3A8A 30%, #F59E0B 100%);
 }
 
 .brand-gradient-soft {
-  background: linear-gradient(135deg, rgba(92, 143, 90, 0.08) 0%, rgba(227, 162, 91, 0.08) 100%);
+  background: linear-gradient(135deg, rgba(30, 64, 175, 0.08) 0%, rgba(245, 158, 11, 0.08) 100%);
 }
 
 .brand-gradient-text {
-  background: linear-gradient(135deg, #5C8F5A 0%, #E3A25B 100%);
+  background: linear-gradient(135deg, #1E40AF 0%, #F59E0B 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -195,3 +195,14 @@
 .stagger-2 { animation-delay: 0.1s; }
 .stagger-3 { animation-delay: 0.15s; }
 .stagger-4 { animation-delay: 0.2s; }
+
+/* Map Marker Label Styling */
+.map-marker-label {
+  background-color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid #E5E7EB;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transform: translateY(-24px);
+  white-space: nowrap;
+}

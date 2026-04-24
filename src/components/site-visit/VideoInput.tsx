@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { Video, X, Loader2, Play, CheckCircle2 } from 'lucide-react';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 
@@ -10,13 +11,19 @@ interface VideoInputProps {
   onUpload: (url: string) => void;
   value?: string;
   path?: string;
+  jobId?: string;
 }
 
-export function VideoInput({ label, onUpload, value, path = 'videos' }: VideoInputProps) {
+export function VideoInput({ label, onUpload, value, path = 'videos', jobId }: VideoInputProps) {
   const [uploading, setUploading] = useState(false);
   const [preview, setPreview] = useState<string | null>(value || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
+
+  // Sync preview with external value changes
+  useEffect(() => {
+    if (value) setPreview(value);
+  }, [value]);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -30,7 +37,8 @@ export function VideoInput({ label, onUpload, value, path = 'videos' }: VideoInp
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
-      const filePath = `${path}/${fileName}`;
+      const folder = jobId ? `jobs/${jobId}/${path}` : `temp/${path}`;
+      const filePath = `${folder}/${fileName}`;
 
       const { data, error } = await supabase.storage
         .from('site-visits')
@@ -64,7 +72,7 @@ export function VideoInput({ label, onUpload, value, path = 'videos' }: VideoInp
       
       <div 
         className={`relative group h-48 rounded-xl border-2 border-dashed transition-all overflow-hidden flex flex-col items-center justify-center gap-2
-          ${preview ? 'border-vision-green bg-black' : 'border-light-gray hover:border-vision-green/50 bg-off-white'}
+          ${preview ? 'border-primary bg-black' : 'border-light-gray hover:border-primary/50 bg-off-white'}
         `}
       >
         {preview ? (
@@ -91,7 +99,7 @@ export function VideoInput({ label, onUpload, value, path = 'videos' }: VideoInp
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
-            <div className="absolute bottom-2 left-2 px-2 py-1 bg-white/90 backdrop-blur-sm rounded-md text-[10px] font-bold text-vision-green flex items-center gap-1 shadow-sm">
+            <div className="absolute bottom-2 left-2 px-2 py-1 bg-white/90 backdrop-blur-sm rounded-md text-[10px] font-bold text-primary flex items-center gap-1 shadow-sm">
               <CheckCircle2 className="w-3 h-3" />
               VIDEO SAVED
             </div>
@@ -103,7 +111,7 @@ export function VideoInput({ label, onUpload, value, path = 'videos' }: VideoInp
           </>
         ) : (
           <>
-            <div className="w-12 h-12 rounded-full bg-white border border-light-gray flex items-center justify-center text-mid-gray group-hover:text-vision-green group-hover:scale-110 transition-all shadow-sm">
+            <div className="w-12 h-12 rounded-full bg-white border border-light-gray flex items-center justify-center text-mid-gray group-hover:text-primary group-hover:scale-110 transition-all shadow-sm">
               <Video className="w-6 h-6" />
             </div>
             <div className="text-center">

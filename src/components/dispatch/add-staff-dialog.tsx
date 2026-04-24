@@ -73,7 +73,7 @@ export function AddStaffDialog({ open, onOpenChange, onSuccess }: AddStaffDialog
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[460px] p-0 overflow-hidden border-none shadow-2xl rounded-2xl">
-        <div className="bg-gradient-to-r from-vision-green/10 to-transparent p-6 pb-4">
+        <div className="bg-gradient-to-r from-primary/10 to-transparent p-6 pb-4">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-charcoal">Invite Staff Member</DialogTitle>
             <DialogDescription className="text-sm text-mid-gray mt-1.5">
@@ -91,7 +91,7 @@ export function AddStaffDialog({ open, onOpenChange, onSuccess }: AddStaffDialog
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               required
-              className="h-10 border-light-gray focus-visible:ring-vision-green/30 focus-visible:border-vision-green transition-all"
+              className="h-10 border-light-gray focus-visible:ring-primary/30 focus-visible:border-primary transition-all"
             />
           </div>
           
@@ -104,14 +104,14 @@ export function AddStaffDialog({ open, onOpenChange, onSuccess }: AddStaffDialog
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="h-10 border-light-gray focus-visible:ring-vision-green/30 focus-visible:border-vision-green transition-all"
+              className="h-10 border-light-gray focus-visible:ring-primary/30 focus-visible:border-primary transition-all"
             />
           </div>
 
           <div className="space-y-1.5">
             <label className="text-[13px] font-semibold text-dark-gray leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Role <span className="text-red-500">*</span></label>
             <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
-              <SelectTrigger className="h-10 border-light-gray focus:ring-vision-green/30 focus:border-vision-green transition-all">
+              <SelectTrigger className="h-10 border-light-gray focus:ring-primary/30 focus:border-primary transition-all">
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
               <SelectContent>
@@ -132,7 +132,7 @@ export function AddStaffDialog({ open, onOpenChange, onSuccess }: AddStaffDialog
               placeholder="Leave blank to auto-generate" 
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="h-10 border-light-gray focus-visible:ring-vision-green/30 focus-visible:border-vision-green transition-all"
+              className="h-10 border-light-gray focus-visible:ring-primary/30 focus-visible:border-primary transition-all"
             />
             <p className="text-[10px] text-mid-gray">
               If left blank, a secure random password will be generated for them.
@@ -152,7 +152,7 @@ export function AddStaffDialog({ open, onOpenChange, onSuccess }: AddStaffDialog
             <Button 
               type="submit" 
               disabled={loading} 
-              className="bg-vision-green hover:bg-green-dark text-white px-6 shadow-md shadow-vision-green/20 transition-all active:scale-[0.98]"
+              className="bg-primary hover:bg-primary-dark text-white px-6 shadow-md shadow-primary/20 transition-all active:scale-[0.98]"
             >
               {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               Add Staff Member

@@ -56,14 +56,14 @@ export function AddUserDialog({ onSuccess }: { onSuccess: () => void }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger
         render={
-          <Button className="bg-vision-green hover:bg-green-dark text-white gap-2 shadow-sm rounded-xl px-5 h-11">
+          <Button className="bg-primary hover:bg-primary-dark text-white gap-2 shadow-sm rounded-xl px-5 h-11">
             <UserPlus className="w-4 h-4" />
             Add Team Member
           </Button>
         }
       />
       <DialogContent className="sm:max-w-[480px] rounded-3xl p-0 overflow-hidden border-none shadow-2xl">
-        <div className="bg-gradient-to-br from-vision-green to-green-dark p-8 text-white relative">
+        <div className="bg-gradient-to-br from-primary to-primary-dark p-8 text-white relative">
           <div className="absolute top-0 right-0 p-8 opacity-10">
             <UserPlus className="w-32 h-32" />
           </div>
@@ -85,7 +85,7 @@ export function AddUserDialog({ onSuccess }: { onSuccess: () => void }) {
                   placeholder="e.g. Rahul Sharma"
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  className="pl-10 h-12 bg-off-white border-light-gray/60 focus-visible:ring-vision-green/20 rounded-xl"
+                  className="pl-10 h-12 bg-off-white border-light-gray/60 focus-visible:ring-primary/20 rounded-xl"
                 />
               </div>
             </div>
@@ -101,7 +101,7 @@ export function AddUserDialog({ onSuccess }: { onSuccess: () => void }) {
                   placeholder="rahul@tnsolar.com"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="pl-10 h-12 bg-off-white border-light-gray/60 focus-visible:ring-vision-green/20 rounded-xl"
+                  className="pl-10 h-12 bg-off-white border-light-gray/60 focus-visible:ring-primary/20 rounded-xl"
                 />
               </div>
             </div>
@@ -109,7 +109,7 @@ export function AddUserDialog({ onSuccess }: { onSuccess: () => void }) {
             <div className="space-y-2">
               <Label htmlFor="role" className="text-xs font-black uppercase tracking-widest text-mid-gray px-1">Access Role</Label>
               <Select value={formData.role} onValueChange={(v) => setFormData({ ...formData, role: v })}>
-                <SelectTrigger className="h-12 bg-off-white border-light-gray/60 focus-visible:ring-vision-green/20 rounded-xl">
+                <SelectTrigger className="h-12 bg-off-white border-light-gray/60 focus-visible:ring-primary/20 rounded-xl">
                   <div className="flex items-center gap-2">
                     <Shield className="w-4 h-4 text-mid-gray" />
                     <SelectValue placeholder="Select role" />
@@ -137,7 +137,7 @@ export function AddUserDialog({ onSuccess }: { onSuccess: () => void }) {
             <Button
               type="submit"
               disabled={loading}
-              className="flex-1 h-12 bg-vision-green hover:bg-green-dark text-white rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-vision-green/20"
+              className="flex-1 h-12 bg-primary hover:bg-primary-dark text-white rounded-xl font-bold uppercase tracking-widest text-xs shadow-lg shadow-primary/20"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Create User'}
             </Button>

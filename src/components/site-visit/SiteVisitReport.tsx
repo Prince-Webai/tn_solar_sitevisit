@@ -31,14 +31,14 @@ export function SiteVisitReport({ data, date }: SiteVisitReportProps) {
             {date ? new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Recent Submission'}
           </p>
         </div>
-        <Badge className="bg-vision-green text-white px-3 py-1">Completed</Badge>
+        <Badge className="bg-primary text-white px-3 py-1">Completed</Badge>
       </div>
 
       {/* 1. Client & Context */}
       <Card className="border-light-gray shadow-sm overflow-hidden">
         <CardHeader className="bg-off-white/50 border-b border-light-gray py-4">
           <CardTitle className="text-base flex items-center gap-2">
-            <User className="w-4 h-4 text-vision-green" />
+            <User className="w-4 h-4 text-primary" />
             Client & Site Context
           </CardTitle>
         </CardHeader>
@@ -78,7 +78,7 @@ export function SiteVisitReport({ data, date }: SiteVisitReportProps) {
             {data.siteGps && (
               <div>
                 <p className="text-[10px] uppercase font-bold text-mid-gray tracking-wider">GPS Coordinates</p>
-                <p className="text-xs font-mono text-vision-green">{data.siteGps.lat.toFixed(6)}, {data.siteGps.lng.toFixed(6)}</p>
+                <p className="text-xs font-mono text-primary">{data.siteGps.lat.toFixed(6)}, {data.siteGps.lng.toFixed(6)}</p>
               </div>
             )}
           </div>
@@ -89,7 +89,7 @@ export function SiteVisitReport({ data, date }: SiteVisitReportProps) {
       <Card className="border-light-gray shadow-sm overflow-hidden">
         <CardHeader className="bg-off-white/50 border-b border-light-gray py-4">
           <CardTitle className="text-base flex items-center gap-2">
-            <Camera className="w-4 h-4 text-vision-green" />
+            <Camera className="w-4 h-4 text-primary" />
             Perimeter & Site Photos
           </CardTitle>
         </CardHeader>
@@ -120,7 +120,7 @@ export function SiteVisitReport({ data, date }: SiteVisitReportProps) {
         <Card className="border-light-gray shadow-sm overflow-hidden">
           <CardHeader className="bg-off-white/50 border-b border-light-gray py-4">
             <CardTitle className="text-base flex items-center gap-2">
-              <Ruler className="w-4 h-4 text-vision-green" />
+              <Ruler className="w-4 h-4 text-primary" />
               Solar Space Details
             </CardTitle>
           </CardHeader>
@@ -137,7 +137,7 @@ export function SiteVisitReport({ data, date }: SiteVisitReportProps) {
             </div>
             <div className="flex items-center justify-between p-3 bg-off-white rounded-lg border border-light-gray">
               <span className="text-sm font-medium">Orientation</span>
-              <Badge className={data.solarSpace.southFacing ? 'bg-vision-green text-white' : 'bg-mid-gray text-white'}>
+              <Badge className={data.solarSpace.southFacing ? 'bg-primary text-white' : 'bg-mid-gray text-white'}>
                 {data.solarSpace.southFacing ? 'South Facing' : 'Non-South'}
               </Badge>
             </div>
@@ -151,14 +151,14 @@ export function SiteVisitReport({ data, date }: SiteVisitReportProps) {
         <Card className="border-light-gray shadow-sm overflow-hidden">
           <CardHeader className="bg-off-white/50 border-b border-light-gray py-4">
             <CardTitle className="text-base flex items-center gap-2">
-              <Zap className="w-4 h-4 text-vision-green" />
+              <Zap className="w-4 h-4 text-primary" />
               Structure & Electrical
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6 space-y-4">
             <div>
               <p className="text-[10px] uppercase font-bold text-mid-gray tracking-wider">Mount Type</p>
-              <p className="text-sm font-bold text-vision-green">{data.structure.size}</p>
+              <p className="text-sm font-bold text-primary">{data.structure.size}</p>
             </div>
             <div className="space-y-2">
               <p className="text-[10px] uppercase font-bold text-mid-gray tracking-wider">Inverter Location</p>
@@ -180,7 +180,7 @@ export function SiteVisitReport({ data, date }: SiteVisitReportProps) {
       <Card className="border-light-gray shadow-sm overflow-hidden">
         <CardHeader className="bg-off-white/50 border-b border-light-gray py-4">
           <CardTitle className="text-base flex items-center gap-2">
-            <Video className="w-4 h-4 text-vision-green" />
+            <Video className="w-4 h-4 text-primary" />
             Video Analysis
           </CardTitle>
         </CardHeader>
@@ -207,7 +207,7 @@ export function SiteVisitReport({ data, date }: SiteVisitReportProps) {
         <Card className="border-light-gray shadow-sm overflow-hidden">
           <CardHeader className="bg-off-white/50 border-b border-light-gray py-4">
             <CardTitle className="text-base flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-vision-green" />
+              <CheckCircle2 className="w-4 h-4 text-primary" />
               Declaration & Signature
             </CardTitle>
           </CardHeader>

@@ -132,8 +132,9 @@ export const jobService = {
   async createJob(job: Omit<Job, 'id' | 'created_at' | 'updated_at' | 'job_number'>) {
     const supabase = createClient();
     
-    // Generate a simple job number for now
-    const jobNumber = `TN-${Math.floor(1000 + Math.random() * 9000)}`;
+    // Use the contact phone number as the job number (cleaned of spaces/special chars)
+    const phoneDigits = job.contact_phone ? job.contact_phone.replace(/\D/g, '') : '';
+    const jobNumber = phoneDigits || `TN-${Math.floor(1000 + Math.random() * 9000)}`;
     
     const { data, error } = await supabase
       .from('jobs')
@@ -147,6 +148,30 @@ export const jobService = {
     }
 
     return data as Job;
+  },
+
+  /**
+   * Delete a job and its associated data
+   */
+  async deleteJob(jobId: string) {
+    const supabase = createClient();
+    
+    // 1. Delete checklist items first (foreign key)
+    await supabase.from('job_checklist').delete().eq('job_id', jobId);
+    
+    // 2. Delete site visits if any
+    await supabase.from('site_visits').delete().eq('job_id', jobId);
+    
+    // 3. Delete the job itself
+    const { error } = await supabase
+      .from('jobs')
+      .delete()
+      .eq('id', jobId);
+
+    if (error) {
+      console.error('Error deleting job:', error);
+      throw error;
+    }
   },
 
   /**
@@ -264,37 +289,61 @@ export const jobService = {
     const supabase = createClient();
     const q = `%${query}%`;
 
-    // Search jobs
-    const { data: jobData, error: jobError } = await supabase
-      .from('jobs')
-      .select('*, client:clients(*)')
-      .or(`job_number.ilike.${q},address.ilike.${q},description.ilike.${q}`)
-      .limit(5);
+    try {
+      // Search jobs
+      const { data: jobData, error: jobError } = await supabase
+        .from('jobs')
+        .select('*, client:clients(*)')
+        .or(`job_number.ilike.${q},address.ilike.${q},description.ilike.${q},contact_name.ilike.${q}`)
+        .limit(5);
 
-    // Search clients
-    const { data: clientData, error: clientError } = await supabase
-      .from('clients')
-      .select('*')
-      .or(`first_name.ilike.${q},last_name.ilike.${q},email.ilike.${q}`)
-      .limit(5);
+      // Search clients
+      const { data: clientData, error: clientError } = await supabase
+        .from('clients')
+        .select('*')
+        .or(`first_name.ilike.${q},last_name.ilike.${q},email.ilike.${q},phone.ilike.${q}`)
+        .limit(5);
 
-    // Search profiles (staff)
-    const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('*')
-      .or(`full_name.ilike.${q},email.ilike.${q}`)
-      .limit(5);
+      // Search profiles (staff)
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .or(`full_name.ilike.${q},email.ilike.${q}`)
+        .limit(5);
 
-    if (jobError || clientError || profileError) {
-      console.error('Search error:', jobError || clientError || profileError);
+      if (jobError || clientError || profileError) {
+        console.error('Search query error:', { jobError, clientError, profileError });
+      }
+
+      return { 
+        jobs: (jobData || []) as Job[], 
+        clients: (clientData || []) as Client[],
+        profiles: (profileData || []) as any[]
+      };
+    } catch (err) {
+      console.error('Search execution error:', err);
       return { jobs: [], clients: [], profiles: [] };
     }
+  },
 
-    return { 
-      jobs: (jobData || []) as Job[], 
-      clients: (clientData || []) as Client[],
-      profiles: (profileData || []) as any[]
-    };
+  /**
+   * Fetch audit logs for a specific job
+   */
+  async fetchAuditLogsByJobId(jobId: string) {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('audit_logs')
+      .select('*')
+      .eq('entity_id', jobId)
+      .eq('entity_type', 'job')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching job logs:', error);
+      return [];
+    }
+
+    return data;
   },
 
   /**
@@ -314,5 +363,34 @@ export const jobService = {
     }
 
     return data;
+  },
+
+  /**
+   * Log a system activity/audit event
+   */
+  async logActivity(params: { userId: string; action: string; entityType: string; entityId?: string; details?: string }) {
+    const supabase = createClient();
+    
+    // Get user name for the log safely
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', params.userId)
+      .maybeSingle();
+
+    if (profileError) console.warn('Could not fetch user profile for logging:', profileError);
+
+    const { error } = await supabase
+      .from('audit_logs')
+      .insert({
+        user_id: params.userId,
+        user_name: profile?.full_name || 'Staff User',
+        action: params.action,
+        entity_type: params.entityType,
+        entity_id: params.entityId,
+        details: params.details
+      });
+
+    if (error) console.error('Failed to log activity:', error);
   }
 };

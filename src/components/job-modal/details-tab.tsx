@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { JOB_STATUSES, JOB_CATEGORIES } from '@/lib/constants';
 import { jobService } from '@/lib/supabase/service';
+import { useAuth } from '@/components/providers/auth-provider';
 import { toast } from 'sonner';
 import type { Client } from '@/lib/types';
 
@@ -25,6 +26,7 @@ interface DetailsTabProps {
 }
 
 export function DetailsTab({ jobId, onSuccess }: DetailsTabProps) {
+  const { user, profile: authProfile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [clientSearch, setClientSearch] = useState('');
   const [showClientDropdown, setShowClientDropdown] = useState(false);
@@ -72,7 +74,7 @@ export function DetailsTab({ jobId, onSuccess }: DetailsTabProps) {
             // Fetch checklist
             const checklistData = await jobService.fetchChecklist(jobId);
             if (checklistData && checklistData.length > 0) {
-              setChecklist(checklistData.map(item => ({
+              setChecklist(checklistData.map((item: any) => ({
                 id: item.id,
                 text: item.text,
                 completed: item.completed
@@ -149,7 +151,7 @@ export function DetailsTab({ jobId, onSuccess }: DetailsTabProps) {
           />
           {showClientDropdown && clientSearch && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-light-gray rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
-              {filteredClients.map(c => (
+              {filteredClients.map((c: any) => (
                 <button
                   key={c.id}
                   className="w-full text-left px-3 py-2 hover:bg-off-white transition-colors flex items-center gap-3"
@@ -159,7 +161,7 @@ export function DetailsTab({ jobId, onSuccess }: DetailsTabProps) {
                     setShowClientDropdown(false);
                   }}
                 >
-                  <div className="w-7 h-7 rounded-full bg-vision-green/10 flex items-center justify-center text-xs font-semibold text-green-dark">
+                  <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs font-semibold text-primary-dark">
                     {c.first_name[0]}{c.last_name[0]}
                   </div>
                   <div>
@@ -169,7 +171,7 @@ export function DetailsTab({ jobId, onSuccess }: DetailsTabProps) {
                 </button>
               ))}
               <button
-                className="w-full text-left px-3 py-2 hover:bg-off-white transition-colors flex items-center gap-2 text-vision-green border-t border-light-gray"
+                className="w-full text-left px-3 py-2 hover:bg-off-white transition-colors flex items-center gap-2 text-primary border-t border-light-gray"
                 onClick={() => setShowClientDropdown(false)}
               >
                 <Plus className="w-4 h-4" />
@@ -262,13 +264,13 @@ export function DetailsTab({ jobId, onSuccess }: DetailsTabProps) {
       <div className="space-y-3">
         <label className="text-sm font-medium text-charcoal">Checklist</label>
         <div className="space-y-2">
-          {checklist.map(item => (
+          {checklist.map((item: any) => (
             <div key={item.id} className="flex items-center gap-2 group">
               <GripVertical className="w-4 h-4 text-light-gray cursor-grab shrink-0" />
               <Checkbox
                 checked={item.completed}
                 onCheckedChange={() => toggleChecklistItem(item.id)}
-                className="border-light-gray data-[state=checked]:bg-vision-green data-[state=checked]:border-vision-green"
+                className="border-light-gray data-[state=checked]:bg-primary data-[state=checked]:border-primary"
               />
               <Input
                 value={item.text}
@@ -291,7 +293,7 @@ export function DetailsTab({ jobId, onSuccess }: DetailsTabProps) {
           variant="ghost"
           size="sm"
           onClick={addChecklistItem}
-          className="text-vision-green hover:text-green-dark hover:bg-accent gap-1.5 h-8"
+          className="text-primary hover:text-primary-dark hover:bg-accent gap-1.5 h-8"
         >
           <Plus className="w-3.5 h-3.5" />
           New Item
@@ -335,7 +337,7 @@ export function DetailsTab({ jobId, onSuccess }: DetailsTabProps) {
             id="billing-same"
             checked={billingSameAsJob}
             onCheckedChange={(c) => setBillingSameAsJob(c === true)}
-            className="border-light-gray data-[state=checked]:bg-vision-green data-[state=checked]:border-vision-green"
+            className="border-light-gray data-[state=checked]:bg-primary data-[state=checked]:border-primary"
           />
           <label htmlFor="billing-same" className="text-sm text-dark-gray cursor-pointer select-none">
             Billing contact same as job contact
@@ -396,6 +398,21 @@ export function DetailsTab({ jobId, onSuccess }: DetailsTabProps) {
                 completed: item.completed
               })));
 
+              // Log activity
+              if (user) {
+                console.log('Attempting to log activity for job:', savedJob.job_number);
+                await jobService.logActivity({
+                  userId: user.id,
+                  action: jobId ? 'job_updated' : 'job_created',
+                  entityType: 'job',
+                  entityId: savedJob.id,
+                  details: jobId 
+                    ? `Updated details for Job #${savedJob.job_number}`
+                    : `Created new Job #${savedJob.job_number} for ${contactName}`
+                });
+                console.log('Activity logged successfully in UI');
+              }
+
               toast.success(jobId ? 'Job updated' : 'Job created');
               onSuccess?.();
             } catch (error) {
@@ -406,7 +423,7 @@ export function DetailsTab({ jobId, onSuccess }: DetailsTabProps) {
             }
           }}
           disabled={loading}
-          className="w-full bg-vision-green hover:bg-green-light text-white h-10 font-semibold shadow-md shadow-vision-green/20"
+          className="w-full bg-primary hover:bg-green-light text-white h-10 font-semibold shadow-md shadow-primary/20"
         >
           {loading ? 'Saving...' : 'Save Job'}
         </Button>

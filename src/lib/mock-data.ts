@@ -144,12 +144,7 @@ export const mockAuditLogs: AuditLog[] = [
 ];
 
 // ──── Saved Versions ────
-export const mockSavedVersions: SavedVersion[] = [
-  { id: 'sv1', job_id: 'j1', user_name: 'Rahul Mandal', action: 'Job Created', created_at: '2026-04-10T08:00:00Z' },
-  { id: 'sv2', job_id: 'j1', user_name: 'Rahul Mandal', action: 'Lead Generated', created_at: '2026-04-10T08:30:00Z' },
-  { id: 'sv3', job_id: 'j1', user_name: 'Lisa Nguyen', action: 'Status changed to Work Order', created_at: '2026-04-12T09:15:00Z' },
-  { id: 'sv4', job_id: 'j1', user_name: 'Lisa Nguyen', action: 'Assigned to James Chen', created_at: '2026-04-12T09:20:00Z' },
-];
+export const mockSavedVersions: SavedVersion[] = [];
 
 // Helper to get today's jobs
 export function getTodaysJobs(): Job[] {

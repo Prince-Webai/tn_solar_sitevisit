@@ -87,15 +87,15 @@ export function Sidebar({ className, onItemClick }: { className?: string; onItem
                 flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
                 transition-all duration-200 group relative
                 ${isActive
-                  ? 'bg-accent text-green-dark'
+                  ? 'bg-accent text-primary-dark'
                   : 'text-dark-gray hover:bg-off-white hover:text-charcoal'
                 }
               `}
             >
               {isActive && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-vision-green" />
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-primary" />
               )}
-              <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-vision-green' : 'text-mid-gray group-hover:text-dark-gray'}`} />
+              <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-primary' : 'text-mid-gray group-hover:text-dark-gray'}`} />
               {!collapsed && (
                 <span className="whitespace-nowrap overflow-hidden">{item.label}</span>
               )}
@@ -135,7 +135,7 @@ export function Sidebar({ className, onItemClick }: { className?: string; onItem
       <div className={`p-3 shrink-0 ${collapsed ? 'flex flex-col items-center gap-2' : ''}`}>
         <div className={`flex items-center ${collapsed ? 'flex-col gap-2' : 'gap-3'}`}>
           <Avatar className="w-9 h-9 shrink-0 border-2 border-green-light/30">
-            <AvatarFallback className="bg-vision-green text-white text-xs font-semibold">
+            <AvatarFallback className="bg-primary text-white text-xs font-semibold">
               {profile?.full_name?.split(' ').map((n: string) => n[0]).join('') || 'U'}
             </AvatarFallback>
           </Avatar>

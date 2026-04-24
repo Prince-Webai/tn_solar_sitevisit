@@ -16,8 +16,8 @@ const actionIcons: Record<string, React.ReactNode> = {
 const actionColors: Record<string, string> = {
   status_change: 'bg-blue-100 text-blue-600',
   assigned: 'bg-purple-100 text-purple-600',
-  completed: 'bg-vision-green/15 text-green-dark',
-  created: 'bg-solar-orange/15 text-orange-dark',
+  completed: 'bg-primary/15 text-primary-dark',
+  created: 'bg-secondary/15 text-secondary-dark',
   quote_sent: 'bg-cyan-100 text-cyan-600',
 };
 
@@ -42,7 +42,7 @@ export function AuditLog() {
   if (loading) {
     return (
       <div className="py-12 flex flex-col items-center justify-center gap-3">
-        <Loader2 className="w-6 h-6 text-vision-green animate-spin" />
+        <Loader2 className="w-6 h-6 text-primary animate-spin" />
         <p className="text-xs text-mid-gray font-medium">Fetching activity logs...</p>
       </div>
     );
@@ -80,7 +80,7 @@ export function AuditLog() {
             {/* Content */}
             <div className="flex-1 min-w-0 pt-1">
               <p className="text-sm text-charcoal leading-relaxed">
-                <span className="font-bold text-vision-green">{log.user_name}</span>
+                <span className="font-bold text-primary">{log.user_name}</span>
                 {' '}
                 <span className="text-dark-gray">{log.details}</span>
               </p>

@@ -86,7 +86,7 @@ export default function DispatchPage() {
   if (authLoading) {
     return (
       <div className="h-full flex items-center justify-center bg-off-white/30">
-        <Loader2 className="w-8 h-8 text-vision-green animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }
@@ -105,7 +105,7 @@ export default function DispatchPage() {
                 <Button
                   id="dispatch-new-job-btn"
                   onClick={() => setBookDialogOpen(true)}
-                  className="bg-vision-green hover:bg-green-dark text-white gap-1.5 h-9 px-3 text-xs font-bold shadow-sm rounded-xl"
+                  className="bg-primary hover:bg-primary-dark text-white gap-1.5 h-9 px-3 text-xs font-bold shadow-sm rounded-xl"
                 >
                   <Plus className="w-4 h-4" />
                   <span className="hidden xs:inline">New Job</span>
@@ -137,7 +137,7 @@ export default function DispatchPage() {
               <div className="flex items-center -space-x-2 overflow-hidden">
                 {staffMembers.slice(0, 3).map(s => (
                   <Avatar key={s.id} className="w-7 h-7 md:w-8 md:h-8 border-2 border-white shadow-sm ring-1 ring-light-gray/50">
-                    <AvatarFallback className="bg-vision-green/10 text-vision-green text-[9px] md:text-[10px] font-bold">
+                    <AvatarFallback className="bg-primary/10 text-primary text-[9px] md:text-[10px] font-bold">
                       {s.full_name.split(' ').map((n: string) => n[0]).join('')}
                     </AvatarFallback>
                   </Avatar>
@@ -151,7 +151,7 @@ export default function DispatchPage() {
               {isAdminOrSales && (
                 <button 
                   onClick={() => setAddStaffOpen(true)} 
-                  className="w-7 h-7 md:w-8 md:h-8 rounded-xl border-2 border-dashed border-light-gray/60 flex items-center justify-center text-mid-gray hover:text-vision-green hover:border-vision-green/40 transition-colors"
+                  className="w-7 h-7 md:w-8 md:h-8 rounded-xl border-2 border-dashed border-light-gray/60 flex items-center justify-center text-mid-gray hover:text-primary hover:border-primary/40 transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
                 </button>
@@ -170,11 +170,11 @@ export default function DispatchPage() {
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center gap-1.5 px-4 md:px-5 py-3 md:py-3.5 text-[11px] md:text-xs font-bold uppercase tracking-wider border-b-2 transition-all whitespace-nowrap ${
                     isActive
-                      ? 'border-vision-green text-vision-green'
+                      ? 'border-primary text-primary'
                       : 'border-transparent text-dark-gray/60 hover:text-charcoal hover:border-light-gray'
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-vision-green' : 'text-mid-gray/50'}`} />
+                  <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-primary' : 'text-mid-gray/50'}`} />
                   {tab.label}
                 </button>
               );
@@ -204,7 +204,7 @@ export default function DispatchPage() {
               <Button
                 variant="outline"
                 size="icon"
-                className="lg:hidden fixed bottom-24 right-4 w-12 h-12 rounded-2xl shadow-xl bg-vision-green text-white border-none z-40 active:scale-95 transition-all"
+                className="lg:hidden fixed bottom-24 right-4 w-12 h-12 rounded-2xl shadow-xl bg-primary text-white border-none z-40 active:scale-95 transition-all"
               >
                 <Layers className="w-5 h-5" />
               </Button>

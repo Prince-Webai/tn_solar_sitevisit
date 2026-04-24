@@ -101,7 +101,7 @@ export default function HistoryPage() {
   if (loading || authLoading) {
     return (
       <div className="h-full flex items-center justify-center py-20">
-        <Loader2 className="w-8 h-8 text-vision-green animate-spin" />
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
       </div>
     );
   }
