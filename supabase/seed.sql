@@ -49,3 +49,8 @@ SELECT
   2, 
   0
 FROM public.clients WHERE first_name = 'David' AND last_name = 'Wilson' LIMIT 1;
+
+-- 3. Insert Admin User Profile
+INSERT INTO public.profiles (id, email, full_name, role)
+VALUES ('8f570fdb-29cf-4e95-8e80-9d4a016e35b6', 'work.devashishbhavsar14@gmail.com', 'Devashish Bhavsar', 'Admin');
+
