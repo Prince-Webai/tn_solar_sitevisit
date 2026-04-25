@@ -61,8 +61,10 @@ export function SiteVisitReport({ data, date }: SiteVisitReportProps) {
             <div className="flex items-start gap-3">
               <MapPin className="w-4 h-4 text-mid-gray mt-0.5" />
               <div>
-                <p className="text-[10px] uppercase font-bold text-mid-gray tracking-wider">Site Address</p>
-                <p className="text-sm font-medium text-charcoal leading-relaxed">{data.siteAddress}</p>
+                <p className="text-[10px] uppercase font-bold text-mid-gray tracking-wider">Site Address & District</p>
+                <p className="text-sm font-medium text-charcoal leading-relaxed">
+                  {data.siteAddress}{data.district ? `, ${data.district}` : ''}
+                </p>
               </div>
             </div>
           </div>

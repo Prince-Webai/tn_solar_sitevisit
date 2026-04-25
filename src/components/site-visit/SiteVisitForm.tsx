@@ -6,7 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChevronRight, ChevronLeft, Save, 
   User, MapPin, Camera, Sun, 
-  Zap, ShieldCheck, CheckCircle2 
+  Zap, ShieldCheck, CheckCircle2,
+  MapPinned
 } from 'lucide-react';
 import SignatureCanvas from 'react-signature-canvas';
 import { useTranslation } from 'react-i18next';
@@ -24,6 +25,7 @@ import { VideoInput } from './VideoInput';
 import { createClient } from '@/lib/supabase/client';
 import { siteVisitService } from '@/lib/supabase/site-visit-service';
 import { jobService } from '@/lib/supabase/service';
+import { TN_DISTRICTS } from '@/lib/constants';
 import type { SiteVisitData } from '@/types/site-visit';
 import { Loader2 } from 'lucide-react';
 import { useEffect } from 'react';
@@ -73,6 +75,7 @@ export function SiteVisitForm({ jobId, onSuccess }: { jobId?: string, onSuccess?
           setValue('clientName', `${job.client?.first_name || ''} ${job.client?.last_name || ''}`.trim() || 'Valued Client');
           setValue('clientPhone', job.client?.phone || job.client?.mobile || '');
           setValue('siteAddress', job.address || '');
+          setValue('district', job.district || '');
           
           // Also pre-fill GPS if job has it
           if (job.latitude && job.longitude) {
@@ -216,6 +219,20 @@ export function SiteVisitForm({ jobId, onSuccess }: { jobId?: string, onSuccess?
                   <div className="space-y-1.5">
                     <label className="text-sm font-semibold text-charcoal">{t('site_address')}</label>
                     <Textarea {...methods.register('siteAddress')} placeholder="Full address of the site" className="h-24" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-semibold text-charcoal flex items-center gap-1.5">
+                      <MapPinned className="w-3.5 h-3.5 text-primary" />
+                      District
+                    </label>
+                    <Select onValueChange={(val) => setValue('district', val)} value={watch('district') || ''}>
+                      <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
+                      <SelectContent>
+                        {TN_DISTRICTS.map(v => (
+                          <SelectItem key={v} value={v}>{v}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">

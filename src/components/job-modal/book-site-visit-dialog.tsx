@@ -17,7 +17,16 @@ import {
   CheckCircle2,
   Loader2,
   ChevronRight,
+  MapPinned,
 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { TN_DISTRICTS } from '@/lib/constants';
 
 interface BookSiteVisitDialogProps {
   open: boolean;
@@ -31,6 +40,7 @@ interface FormData {
   phone: string;
   email: string;
   address: string;
+  district: string;
   notes: string;
 }
 
@@ -40,6 +50,7 @@ const EMPTY_FORM: FormData = {
   phone: '',
   email: '',
   address: '',
+  district: 'Chennai',
   notes: '',
 };
 
@@ -50,8 +61,13 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
   const [done, setDone] = useState(false);
   const [jobNumber, setJobNumber] = useState('');
 
-  const set = (field: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-    setForm(prev => ({ ...prev, [field]: e.target.value }));
+  const set = (field: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | string) => {
+    if (typeof e === 'string') {
+      setForm(prev => ({ ...prev, [field]: e }));
+    } else {
+      setForm(prev => ({ ...prev, [field]: e.target.value }));
+    }
+  };
 
   const handleClose = (v: boolean) => {
     if (!v) {
@@ -71,18 +87,22 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
       setLoading(true);
 
       // 1. Create or upsert client
+      const clientEmail = form.email.trim() || `${form.firstName.toLowerCase().replace(/\s+/g, '.')}.${Date.now()}@tnsolar.com`;
+
       const client = await jobService.createClient({
         first_name: form.firstName.trim(),
         last_name:  form.lastName.trim() || '-',
-        email:      form.email.trim() || `${form.firstName.toLowerCase()}.${Date.now()}@tnsolar.com`,
+        email:      clientEmail,
         phone:      form.phone.trim(),
         address:    form.address.trim(),
+        district:   form.district,
       });
 
       // 2. Create the job as a Site Assessment
       const job = await jobService.createJob({
         client_id:           client.id,
         address:             form.address.trim(),
+        district:            form.district,
         status:              'Lead' as any,
         category:            'Site Assessment' as any,
         description:         form.notes.trim() || 'Site visit booked by sales',
@@ -240,6 +260,26 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
                   onChange={set('address')}
                   className="h-10 bg-off-white border-light-gray focus:border-primary/50"
                 />
+              </div>
+
+              {/* District */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-charcoal flex items-center gap-1.5">
+                  <MapPinned className="w-3.5 h-3.5 text-primary" />
+                  District <span className="text-red-500">*</span>
+                </label>
+                <Select value={form.district} onValueChange={set('district')}>
+                  <SelectTrigger className="h-10 bg-off-white border-light-gray focus:ring-primary/20">
+                    <SelectValue placeholder="Select District" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TN_DISTRICTS.map((district) => (
+                      <SelectItem key={district} value={district}>
+                        {district}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Notes */}

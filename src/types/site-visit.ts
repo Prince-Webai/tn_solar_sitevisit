@@ -2,6 +2,7 @@ export interface SiteVisitData {
   clientName: string;
   clientPhone: string;
   siteAddress: string;
+  district?: string;
   siteGps?: { lat: number; lng: number };
   noOfFloors?: string;
   otherFloorValue?: string;

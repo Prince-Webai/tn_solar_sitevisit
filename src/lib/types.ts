@@ -17,6 +17,7 @@ export interface Client {
   phone?: string;
   mobile?: string;
   address?: string;
+  district?: string;
   created_at: string;
 }
 
@@ -27,6 +28,7 @@ export interface Job {
   client?: Client;
   address: string;
   suburb?: string;
+  district?: string;
   status: JobStatus;
   category: JobCategory;
   description: string;
