@@ -31,40 +31,48 @@ function AnimatedCounter({ value, prefix = '' }: { value: number; prefix?: strin
   return <span>{prefix}{count.toLocaleString()}</span>;
 }
 
+import useSWR from 'swr';
+import { useAuth } from '@/components/providers/auth-provider';
+
 export function KpiCards() {
-  const [todaysCount,    setTodaysCount]    = useState(0);
-  const [pendingCount,   setPendingCount]   = useState(0);
-  const [teamOnSite,     setTeamOnSite]     = useState(0);
-  const [teamEnRoute,    setTeamEnRoute]    = useState(0);
-  const [teamAvailable,  setTeamAvailable]  = useState(0);
+  const { user, profile, loading: authLoading } = useAuth();
   const supabase = createClient();
 
-  useEffect(() => {
-    async function loadKpis() {
-      try {
-        const jobs = await jobService.fetchJobs();
-
-        // Today's scheduled jobs
-        const today = new Date().toISOString().split('T')[0];
-        const todayJobs = jobs.filter(j => j.scheduled_date?.startsWith(today));
-        setTodaysCount(todayJobs.length);
-
-        // Pending approvals = Lead
-        setPendingCount(jobs.filter(j => j.status === 'Lead').length);
-
-        // Team status from profiles
-        const { data: profiles } = await supabase.from('profiles').select('status');
-        if (profiles) {
-          setTeamOnSite(profiles.filter((p: any) => p.status === 'On Site').length);
-          setTeamEnRoute(profiles.filter((p: any) => p.status === 'En Route').length);
-          setTeamAvailable(profiles.filter((p: any) => !p.status || p.status === 'Available').length);
-        }
-      } catch (err) {
-        console.error('Failed to load KPIs:', err);
-      }
+  // Fetch jobs using the same key as ActionKanban to benefit from deduplication
+  const { data: jobs = [] } = useSWR(
+    !authLoading && user && profile ? ['jobs', profile.role, user.id] : null,
+    async () => {
+      return await jobService.fetchJobs({ 
+        role: profile?.role, 
+        userId: user?.id 
+      });
+    },
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 10000,
     }
-    loadKpis();
-  }, []);
+  );
+
+  // Fetch profiles separately
+  const { data: profiles = [] } = useSWR(
+    !authLoading ? 'team-status' : null,
+    async () => {
+      const { data } = await supabase.from('profiles').select('status');
+      return data || [];
+    }
+  );
+
+  // Today's scheduled jobs
+  const today = new Date().toISOString().split('T')[0];
+  const todaysCount = jobs.filter(j => j.scheduled_date?.startsWith(today)).length;
+
+  // Pending approvals = Lead
+  const pendingCount = jobs.filter(j => j.status === 'Lead').length;
+
+  // Team status
+  const teamOnSite = profiles.filter((p: any) => p.status === 'On Site').length;
+  const teamEnRoute = profiles.filter((p: any) => p.status === 'En Route').length;
+  const teamAvailable = profiles.filter((p: any) => !p.status || p.status === 'Available').length;
 
   const kpis = [
     {

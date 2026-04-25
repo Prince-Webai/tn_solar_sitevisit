@@ -40,77 +40,48 @@ export const siteVisitService = {
   },
 
   /**
-   * Upsert a site visit for a specific job
+   * Upsert a site visit for a specific job using atomic RPC
    */
   async upsertSiteVisit(jobId: string, engineerId: string, data: SiteVisitData) {
     const supabase = createClient();
     
-    // Map frontend camelCase to database snake_case
-    const payload = {
-      job_id: jobId,
-      engineer_id: engineerId,
-      client_name: data.clientName,
-      client_phone: data.clientPhone,
-      site_address: data.siteAddress,
-      district: data.district,
-      site_gps: data.siteGps,
-      no_of_floors: data.noOfFloors,
-      other_floor_value: data.otherFloorValue,
-      phase: data.phase,
-      photos: data.photos,
-      videos: data.videos,
-      solar_space: data.solarSpace,
-      structure: data.structure,
-      electrical: data.electrical,
-      signature_url: data.signature,
-      status: 'completed',
-      updated_at: new Date().toISOString(),
-    };
-
-    const { data: result, error: upsertError } = await supabase
-      .from('site_visits')
-      .upsert(payload, { onConflict: 'job_id' })
-      .select()
-      .single();
-
-    if (upsertError) {
-      console.error('Error upserting site visit:', upsertError);
-      throw new Error(`Failed to save site visit data: ${upsertError.message}`);
-    }
-
-    // Sync GPS to jobs table for map view
-    if (data.siteGps) {
-      const { error: jobUpdateError } = await supabase
-        .from('jobs')
-        .update({
-          latitude: data.siteGps.lat,
-          longitude: data.siteGps.lng,
-          status: 'In Progress' // Automatically move to in progress on visit submission
-        })
-        .eq('id', jobId);
-      
-      if (jobUpdateError) {
-        console.error('Error updating job GPS/status:', jobUpdateError);
-        // We don't throw here to avoid failing the whole submission if just the job sync fails,
-        // but we should probably log it or alert the user.
-      }
-    }
-
-    // Add audit log entry
+    // Get user name for audit log
     const { data: profile } = await supabase
       .from('profiles')
       .select('full_name')
       .eq('id', engineerId)
       .single();
 
-    await supabase.from('audit_logs').insert({
-      user_id: engineerId,
-      user_name: profile?.full_name || 'System',
-      action: 'site_visit_submitted',
-      entity_type: 'job',
-      entity_id: jobId,
-      details: `Site visit report submitted for job`,
-    });
+    const { data: result, error: rpcError } = await supabase
+      .rpc('submit_site_visit_v2', {
+        p_job_id: jobId,
+        p_engineer_id: engineerId,
+        p_client_name: data.clientName,
+        p_client_phone: data.clientPhone,
+        p_site_address: data.siteAddress,
+        p_district: data.district,
+        p_site_gps: data.siteGps,
+        p_no_of_floors: data.noOfFloors,
+        p_other_floor_value: data.otherFloorValue,
+        p_phase: data.phase,
+        p_photos: data.photos,
+        p_videos: data.videos,
+        p_solar_space: data.solarSpace,
+        p_structure: data.structure,
+        p_electrical: data.electrical,
+        p_signature_url: data.signature,
+        p_user_name: profile?.full_name || 'Engineer'
+      });
+
+    if (rpcError) {
+      console.error('Error in submit_site_visit_v2 RPC:', rpcError);
+      throw new Error(`Failed to save site visit data: ${rpcError.message}`);
+    }
+
+    if (result && !result.success) {
+      console.error('RPC returned failure:', result.error);
+      throw new Error(`Failed to save site visit data: ${result.error}`);
+    }
 
     return result;
   }

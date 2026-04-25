@@ -62,22 +62,23 @@ export function SiteVisitForm({ jobId, onSuccess }: { jobId?: string, onSuccess?
     async function loadData() {
       if (!jobId) return;
       try {
-        // 1. Try to load existing site visit
-        const existingData = await siteVisitService.fetchByJobId(jobId);
+        // Parallel fetch for existing visit and job details
+        const [existingData, job] = await Promise.all([
+          siteVisitService.fetchByJobId(jobId),
+          jobService.fetchJobById(jobId)
+        ]);
+
         if (existingData) {
           reset(existingData);
           return;
         }
 
-        // 2. If no site visit yet, pre-fill from job/client data
-        const job = await jobService.fetchJobById(jobId);
         if (job) {
           setValue('clientName', `${job.client?.first_name || ''} ${job.client?.last_name || ''}`.trim() || 'Valued Client');
           setValue('clientPhone', job.client?.phone || job.client?.mobile || '');
           setValue('siteAddress', job.address || '');
           setValue('district', job.district || '');
           
-          // Also pre-fill GPS if job has it
           if (job.latitude && job.longitude) {
             setValue('siteGps', { lat: Number(job.latitude), lng: Number(job.longitude) });
           }
@@ -150,7 +151,28 @@ export function SiteVisitForm({ jobId, onSuccess }: { jobId?: string, onSuccess?
   const lightningArrestor = watch('structure.lightningArrestor');
 
   return (
-    <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-light-gray min-h-[600px] flex flex-col">
+    <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden border border-light-gray min-h-[600px] flex flex-col relative">
+      {/* Submission Overlay */}
+      <AnimatePresence>
+        {isSubmitting && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center gap-4"
+          >
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+              <Save className="absolute inset-0 m-auto w-6 h-6 text-primary animate-pulse" />
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-bold text-charcoal">Saving Report...</h3>
+              <p className="text-sm text-mid-gray">Syncing site visit data and updating job status.</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Progress Header */}
       <div className="bg-off-white border-b border-light-gray p-6">
         <div className="flex items-center justify-between mb-8">

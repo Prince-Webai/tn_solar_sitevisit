@@ -5,16 +5,18 @@ export const jobService = {
   /**
    * Fetch all jobs with their associated client data, optionally filtered by role/user
    */
-  async fetchJobs(filters?: { assigned_to?: string; role?: string; userId?: string; statuses?: string[] }) {
+  async fetchJobs(filters?: { assigned_to?: string; role?: string; userId?: string; statuses?: string[]; fields?: string }) {
     const supabase = createClient();
     try {
-      let query = supabase
-        .from('jobs')
-        .select(`
+      const selectFields = filters?.fields || `
           *,
           client:clients(*),
           assigned_staff:profiles(*)
-        `);
+        `;
+      
+      let query = supabase
+        .from('jobs')
+        .select(selectFields);
       
       // Auto-filter for Engineers/Technicians if role/userId provided
       if (filters?.role === 'Engineer' || filters?.role === 'Technician') {

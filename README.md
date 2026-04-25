@@ -32,14 +32,16 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 ## Deployment
 
 ### Deploy on Netlify (Recommended)
-This project is configured for easy deployment on Netlify. 
-1. Connect your GitHub repository to Netlify.
-2. The `netlify.toml` file will automatically configure the build settings.
-3. **Important**: Add the following environment variables in the Netlify dashboard:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+This project is optimized for Netlify with edge-side middleware and automatic image optimization.
+
+1. **Connect GitHub**: Link your repository to a new site on Netlify.
+2. **Build Settings**: The `netlify.toml` file handles the configuration automatically.
+3. **Environment Variables**: Add these in the Netlify Dashboard (**Site settings > Environment variables**):
+   - `NEXT_PUBLIC_SUPABASE_URL`: Your Supabase project URL.
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`: Your Supabase anonymous key.
+   - `SUPABASE_SERVICE_ROLE_KEY`: Required for admin API routes (found in Supabase Settings > API).
+4. **Image Optimization**: The project uses `sharp` and Netlify's Image CDN for high-performance asset delivery.
 
 ### Deploy on Vercel
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new).
 1. Connect your repository to Vercel.
 2. Configure the same environment variables mentioned above.

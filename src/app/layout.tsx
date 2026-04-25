@@ -34,6 +34,7 @@ export const metadata: Metadata = {
 
 import { I18nProvider } from "@/components/providers/i18n-provider";
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { SWRProvider } from "@/components/providers/swr-provider";
 
 export default function RootLayout({
   children,
@@ -45,9 +46,11 @@ export default function RootLayout({
       <body className="min-h-full font-sans">
         <I18nProvider>
           <AuthProvider>
-            <TooltipProvider delay={300}>
-              {children}
-            </TooltipProvider>
+            <SWRProvider>
+              <TooltipProvider delay={300}>
+                {children}
+              </TooltipProvider>
+            </SWRProvider>
           </AuthProvider>
         </I18nProvider>
         <Toaster position="top-right" richColors closeButton />

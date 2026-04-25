@@ -6,12 +6,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { WEATHER_THRESHOLDS, DEFAULT_COORDS } from '@/lib/constants';
 import type { WeatherData } from '@/lib/types';
 
-export function WeatherWidget() {
-  const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [loading, setLoading] = useState(true);
+import useSWR from 'swr';
 
-  useEffect(() => {
-    async function fetchWeather() {
+export function WeatherWidget() {
+  const { data: weather, isLoading } = useSWR(
+    'weather-data',
+    async () => {
       try {
         const res = await fetch(
           `https://api.open-meteo.com/v1/forecast?latitude=${DEFAULT_COORDS.lat}&longitude=${DEFAULT_COORDS.lng}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=precipitation_probability_max&timezone=Asia%2FKolkata&forecast_days=1`
@@ -27,30 +27,31 @@ export function WeatherWidget() {
         else if (weatherCode >= 45) { condition = 'Cloudy'; icon = 'cloud'; }
         else if (weatherCode >= 2) { condition = 'Partly Cloudy'; icon = 'cloud'; }
 
-        setWeather({
+        return {
           temperature: Math.round(current.temperature_2m),
           condition,
           icon,
           wind_speed: Math.round(current.wind_speed_10m),
           rain_probability: daily.precipitation_probability_max?.[0] ?? 0,
           humidity: current.relative_humidity_2m,
-        });
-      } catch {
-        // Fallback mock data
-        setWeather({
+        } as WeatherData;
+      } catch (err) {
+        console.error('Weather fetch failed, using fallback:', err);
+        return {
           temperature: 18,
           condition: 'Partly Cloudy',
           icon: 'cloud',
           wind_speed: 15,
           rain_probability: 30,
           humidity: 65,
-        });
-      } finally {
-        setLoading(false);
+        } as WeatherData;
       }
+    },
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 3600000, // Cache weather for 1 hour
     }
-    fetchWeather();
-  }, []);
+  );
 
   const showWarning = weather && (
     weather.rain_probability > WEATHER_THRESHOLDS.RAIN_PROBABILITY ||
@@ -59,7 +60,7 @@ export function WeatherWidget() {
 
   const WeatherIcon = weather?.icon === 'rain' ? CloudRain : weather?.icon === 'cloud' ? Cloud : Sun;
 
-  if (loading) {
+  if (isLoading) {
     return (
       <Card className="card-hover border-light-gray">
         <CardContent className="p-5">

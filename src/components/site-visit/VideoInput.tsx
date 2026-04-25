@@ -28,6 +28,13 @@ export function VideoInput({ label, onUpload, value, path = 'videos', jobId }: V
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    // Check file size (20MB limit for better reliability on cellular networks)
+    const MAX_SIZE = 20 * 1024 * 1024; // 20MB
+    if (file.size > MAX_SIZE) {
+      alert('Video file is too large (max 20MB). Please record a shorter clip or use lower resolution settings.');
+      return;
+    }
 
     // Show local preview
     const localUrl = URL.createObjectURL(file);

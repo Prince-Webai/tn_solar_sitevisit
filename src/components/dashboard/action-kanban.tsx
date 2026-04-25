@@ -44,31 +44,24 @@ interface ActionKanbanProps {
   onJobClick?: (jobId: string) => void;
 }
 
+import useSWR from 'swr';
+
 export function ActionKanban({ onJobClick }: ActionKanbanProps) {
   const { user, profile, loading: authLoading } = useAuth();
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadData() {
-      if (!user || !profile) {
-        setLoading(false);
-        return;
-      }
-      try {
-        const data = await jobService.fetchJobs({ 
-          role: profile.role, 
-          userId: user.id 
-        });
-        setJobs(data);
-      } catch (error) {
-        console.error('Failed to load dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
+  
+  const { data: jobs = [], error, isLoading, isValidating } = useSWR(
+    !authLoading && user && profile ? ['jobs', profile.role, user.id] : null,
+    async () => {
+      return await jobService.fetchJobs({ 
+        role: profile?.role, 
+        userId: user?.id 
+      });
+    },
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 10000,
     }
-    if (!authLoading) loadData();
-  }, [user, profile, authLoading]);
+  );
 
   if (authLoading) {
     return (
@@ -78,7 +71,7 @@ export function ActionKanban({ onJobClick }: ActionKanbanProps) {
     );
   }
 
-  if (loading) {
+  if (isLoading) {
      return (
       <Card className="border-light-gray h-[400px] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
