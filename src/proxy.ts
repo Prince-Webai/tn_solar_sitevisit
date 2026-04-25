@@ -31,10 +31,10 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   // Public routes that don't require authentication
-  const publicRoutes = ['/login', '/api'];
+  const publicRoutes = ['/login', '/api', '/setup-admin'];
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
 
-  // Redirect root to dashboard
+  // Redirect root to dashboard or login
   if (pathname === '/') {
     if (!user) {
       return NextResponse.redirect(new URL('/login', request.url));
