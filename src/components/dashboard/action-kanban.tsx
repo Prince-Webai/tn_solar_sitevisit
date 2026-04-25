@@ -47,6 +47,7 @@ interface ActionKanbanProps {
 import { useJobs } from '@/hooks/use-jobs';
 
 export function ActionKanban({ onJobClick }: ActionKanbanProps) {
+  const { profile, loading: authLoading } = useAuth();
   const { jobs, isLoading, isValidating } = useJobs();
 
   if (authLoading) {

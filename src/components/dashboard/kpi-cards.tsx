@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { jobService } from '@/lib/supabase/service';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/providers/auth-provider';
 
 function AnimatedCounter({ value, prefix = '' }: { value: number; prefix?: string }) {
   const [count, setCount] = useState(0);
