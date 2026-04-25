@@ -273,9 +273,18 @@ CREATE POLICY "Profiles are readable by all authenticated users" ON public.profi
 CREATE POLICY "Users can update their own profiles" ON public.profiles
   FOR UPDATE USING (auth.uid() = id);
 
-CREATE POLICY "Admins mutations profiles" ON public.profiles
-  FOR INSERT, UPDATE, DELETE
-  WITH CHECK (
+CREATE POLICY "Admins insert profiles" ON public.profiles
+  FOR INSERT WITH CHECK (
+    (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('Admin', 'Dispatcher')
+  );
+
+CREATE POLICY "Admins update profiles" ON public.profiles
+  FOR UPDATE USING (
+    (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('Admin', 'Dispatcher')
+  );
+
+CREATE POLICY "Admins delete profiles" ON public.profiles
+  FOR DELETE USING (
     (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('Admin', 'Dispatcher')
   );
 
