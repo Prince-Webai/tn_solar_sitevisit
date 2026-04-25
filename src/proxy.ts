@@ -4,54 +4,64 @@ import { NextResponse, type NextRequest } from 'next/server';
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  let supabaseResponse = NextResponse.next({ request });
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
-  // Refresh session — important, do not remove
-  const { data: { user } } = await supabase.auth.getUser();
-
-  // Public routes that don't require authentication
+  // Skip auth check for static files and public routes immediately
   const publicRoutes = ['/login', '/api', '/setup-admin'];
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
 
-  // Redirect root to dashboard or login
-  if (pathname === '/') {
-    if (!user) {
+  let supabaseResponse = NextResponse.next({ request });
+
+  try {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value }) =>
+              request.cookies.set(name, value)
+            );
+            supabaseResponse = NextResponse.next({ request });
+            cookiesToSet.forEach(({ name, value, options }) =>
+              supabaseResponse.cookies.set(name, value, options)
+            );
+          },
+        },
+      }
+    );
+
+    // Refresh session — important, do not remove
+    const { data: { user } } = await supabase.auth.getUser();
+
+    // Redirect root to dashboard or login
+    if (pathname === '/') {
+      return NextResponse.redirect(
+        new URL(user ? '/dashboard' : '/login', request.url)
+      );
+    }
+
+    // If not logged in and trying to access a protected route → go to login
+    if (!user && !isPublicRoute) {
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+
+    // If already logged in and trying to access the login page → go to dashboard
+    if (user && pathname.startsWith('/login')) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+  } catch (error) {
+    // If Supabase fails (e.g. missing env vars, network issue), 
+    // allow the request through so the page can handle the error gracefully
+    console.error('Proxy auth error:', error);
+
+    // Only redirect to login if hitting a protected route and auth failed
+    if (!isPublicRoute && pathname !== '/') {
       return NextResponse.redirect(new URL('/login', request.url));
     }
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-
-  // If not logged in and trying to access a protected route → go to login
-  if (!user && !isPublicRoute) {
-    const loginUrl = new URL('/login', request.url);
-    loginUrl.searchParams.set('redirect', pathname);
-    return NextResponse.redirect(loginUrl);
-  }
-
-  // If already logged in and trying to access the login page → go to dashboard
-  if (user && pathname.startsWith('/login')) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   return supabaseResponse;
