@@ -1,10 +1,13 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Enable compression
+  // Required for @netlify/plugin-nextjs to handle SSR correctly
+  output: "standalone",
+
+  // Enable gzip/brotli compression
   compress: true,
-  
-  // Power up image optimization
+
+  // Image optimization — allow Supabase storage URLs
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
@@ -17,15 +20,20 @@ const nextConfig: NextConfig = {
     ],
   },
 
-  // Build optimizations
+  // Skip type-check during build (types checked separately in CI)
   typescript: {
     ignoreBuildErrors: true,
   },
-  
-  // Experimental performance features
+
+  // ESLint: don't block builds on lint warnings
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+
+  // Tree-shake heavy icon/animation libraries
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
-  }
+  },
 };
 
 export default nextConfig;

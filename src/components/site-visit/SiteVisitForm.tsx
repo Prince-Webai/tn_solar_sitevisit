@@ -107,26 +107,36 @@ export function SiteVisitForm({ jobId, onSuccess }: { jobId?: string, onSuccess?
       
       const signatureCanvas = signatureRef.current;
       if (signatureCanvas && !signatureCanvas.isEmpty()) {
-        const signatureDataUrl = signatureCanvas.toDataURL('image/png');
-        
-        // Convert data URL to blob
-        const response = await fetch(signatureDataUrl);
-        const blob = await response.blob();
-        const file = new File([blob], `signature-${Date.now()}.png`, { type: 'image/png' });
+        try {
+          const signatureDataUrl = signatureCanvas.toDataURL('image/png');
+          
+          // Convert data URL to blob
+          const response = await fetch(signatureDataUrl);
+          const blob = await response.blob();
+          const file = new File([blob], `signature-${Date.now()}.png`, { type: 'image/png' });
 
-        const filePath = `jobs/${jobId}/signatures/signature-${Date.now()}.png`;
-        const { error: uploadError } = await supabase.storage
-          .from('site-visits')
-          .upload(filePath, file);
+          const filePath = `jobs/${jobId}/signatures/signature-${Date.now()}.png`;
 
-        if (uploadError) {
-          console.error('Error uploading signature:', uploadError);
-          // Fallback to data URL if upload fails, but log it
-        } else {
-          const { data: { publicUrl } } = supabase.storage
+          // Upload with a timeout so a slow connection doesn't hang submission
+          const uploadPromise = supabase.storage
             .from('site-visits')
-            .getPublicUrl(filePath);
-          signatureUrl = publicUrl;
+            .upload(filePath, file);
+          const timeoutPromise = new Promise<{ error: Error }>(resolve =>
+            setTimeout(() => resolve({ error: new Error('Signature upload timed out') }), 10000)
+          );
+
+          const { error: uploadError } = await Promise.race([uploadPromise, timeoutPromise]) as any;
+
+          if (uploadError) {
+            console.warn('Signature upload failed/timed out, proceeding without it:', uploadError.message);
+          } else {
+            const { data: { publicUrl } } = supabase.storage
+              .from('site-visits')
+              .getPublicUrl(filePath);
+            signatureUrl = publicUrl;
+          }
+        } catch (sigErr) {
+          console.warn('Signature processing error, proceeding without it:', sigErr);
         }
       }
       
@@ -493,7 +503,6 @@ export function SiteVisitForm({ jobId, onSuccess }: { jobId?: string, onSuccess?
         ) : (
           <Button
             type="submit"
-            onClick={handleSubmit(onSubmit)}
             disabled={isSubmitting}
             className="h-12 px-8 bg-secondary hover:bg-orange-light font-bold text-white shadow-lg shadow-secondary/20"
           >

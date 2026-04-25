@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { jobService } from '@/lib/supabase/service';
+import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/providers/auth-provider';
 import { toast } from 'sonner';
 import {
@@ -86,17 +87,24 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
     try {
       setLoading(true);
 
-      // 1. Create or upsert client
+      const supabase = createClient();
+
+      // 1. Resolve user display name in parallel with client creation
       const clientEmail = form.email.trim() || `${form.firstName.toLowerCase().replace(/\s+/g, '.')}.${Date.now()}@tnsolar.com`;
 
-      const client = await jobService.createClient({
-        first_name: form.firstName.trim(),
-        last_name:  form.lastName.trim() || '-',
-        email:      clientEmail,
-        phone:      form.phone.trim(),
-        address:    form.address.trim(),
-        district:   form.district,
-      });
+      const [client, profileResult] = await Promise.all([
+        jobService.createClient({
+          first_name: form.firstName.trim(),
+          last_name:  form.lastName.trim() || '-',
+          email:      clientEmail,
+          phone:      form.phone.trim(),
+          address:    form.address.trim(),
+          district:   form.district,
+        }),
+        user
+          ? supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle()
+          : Promise.resolve({ data: null })
+      ]);
 
       // 2. Create the job as a Site Assessment
       const job = await jobService.createJob({
@@ -113,14 +121,18 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
         materials_status:    'Pending'
       });
 
-      // 3. Log activity
+      // 3. Fire-and-forget audit log — do NOT await, keeps UI snappy
       if (user) {
-        await jobService.logActivity({
-          userId: user.id,
-          action: 'job_created',
-          entityType: 'job',
-          entityId: job.id,
-          details: `Site Visit booked for ${form.firstName} ${form.lastName} by sales team.`
+        const userName = (profileResult as any)?.data?.full_name || 'Sales Staff';
+        supabase.from('audit_logs').insert({
+          user_id:     user.id,
+          user_name:   userName,
+          action:      'job_created',
+          entity_type: 'job',
+          entity_id:   job.id,
+          details:     `Site Visit booked for ${form.firstName} ${form.lastName} by sales team.`
+        }).then(({ error }) => {
+          if (error) console.error('Silent audit log failure:', error);
         });
       }
 

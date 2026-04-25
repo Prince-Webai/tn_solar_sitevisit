@@ -77,7 +77,7 @@ export default function DispatchPage() {
       setStaffMembers(data || []);
     }
     if (!authLoading) loadStaff();
-  }, [refreshKey, user, profile, authLoading, isEngineer, supabase]);
+  }, [user, profile, authLoading, isEngineer, supabase]);
 
   const handleJobDoubleClick = (jobId: string) => {
     setSelectedJobId(jobId);
