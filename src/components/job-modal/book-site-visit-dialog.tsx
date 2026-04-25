@@ -268,7 +268,7 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
                   <MapPinned className="w-3.5 h-3.5 text-primary" />
                   District <span className="text-red-500">*</span>
                 </label>
-                <Select value={form.district} onValueChange={set('district')}>
+                <Select value={form.district} onValueChange={(val) => set('district')(val)}>
                   <SelectTrigger className="h-10 bg-off-white border-light-gray focus:ring-primary/20">
                     <SelectValue placeholder="Select District" />
                   </SelectTrigger>

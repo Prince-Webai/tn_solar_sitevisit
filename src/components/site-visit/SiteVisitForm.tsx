@@ -225,7 +225,7 @@ export function SiteVisitForm({ jobId, onSuccess }: { jobId?: string, onSuccess?
                       <MapPinned className="w-3.5 h-3.5 text-primary" />
                       District
                     </label>
-                    <Select onValueChange={(val) => setValue('district', val)} value={watch('district') || ''}>
+                    <Select onValueChange={(val) => setValue('district', val ?? undefined)} value={watch('district') || ''}>
                       <SelectTrigger><SelectValue placeholder="Select District" /></SelectTrigger>
                       <SelectContent>
                         {TN_DISTRICTS.map(v => (

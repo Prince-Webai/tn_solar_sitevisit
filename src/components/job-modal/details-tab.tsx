@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, GripVertical, Trash2, Search, MapPin, User } from 'lucide-react';
+import { Plus, GripVertical, Trash2, Search, MapPin, MapPinned, User } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
-import { JOB_STATUSES, JOB_CATEGORIES } from '@/lib/constants';
+import { JOB_STATUSES, JOB_CATEGORIES, TN_DISTRICTS } from '@/lib/constants';
 import { jobService } from '@/lib/supabase/service';
 import { useAuth } from '@/components/providers/auth-provider';
 import { toast } from 'sonner';
@@ -35,6 +35,7 @@ export function DetailsTab({ jobId, onSuccess }: DetailsTabProps) {
   const [category, setCategory] = useState('Installation');
   const [poNumber, setPoNumber] = useState('');
   const [address, setAddress] = useState('');
+  const [district, setDistrict] = useState('Chennai');
   const [description, setDescription] = useState('');
   const [contactName, setContactName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
@@ -62,6 +63,7 @@ export function DetailsTab({ jobId, onSuccess }: DetailsTabProps) {
               setClientSearch(`${jobData.client.first_name} ${jobData.client.last_name}`);
             }
             setAddress(jobData.address || '');
+            setDistrict(jobData.district || 'Chennai');
             setStatus(jobData.status || 'Quote');
             setCategory(jobData.category || 'Installation');
             setPoNumber(jobData.po_number || '');
@@ -202,6 +204,26 @@ export function DetailsTab({ jobId, onSuccess }: DetailsTabProps) {
           onChange={(e) => setAddress(e.target.value)}
           className="h-10 bg-off-white border-light-gray"
         />
+      </div>
+
+      {/* District */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-charcoal flex items-center gap-1.5">
+          <MapPinned className="w-3.5 h-3.5 text-mid-gray" />
+          District
+        </label>
+        <Select value={district} onValueChange={(v) => v && setDistrict(v)}>
+          <SelectTrigger className="h-10 bg-off-white border-light-gray">
+            <SelectValue placeholder="Select District" />
+          </SelectTrigger>
+          <SelectContent>
+            {TN_DISTRICTS.map((d) => (
+              <SelectItem key={d} value={d}>
+                {d}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Status + Category */}
@@ -375,6 +397,7 @@ export function DetailsTab({ jobId, onSuccess }: DetailsTabProps) {
               const jobData = {
                 client_id: clientId,
                 address,
+                district,
                 status: status as any,
                 category: category as any,
                 description,
