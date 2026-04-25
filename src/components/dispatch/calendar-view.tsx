@@ -75,27 +75,13 @@ function MiniCalendar({ selectedDate, onSelect }: { selectedDate: Date; onSelect
   );
 }
 
-import useSWR from 'swr';
+import { useJobs } from '@/hooks/use-jobs';
 
 export function CalendarView({ refreshKey, onJobClick }: { refreshKey?: number; onJobClick?: (id: string) => void }) {
-  const { user, profile, loading: authLoading } = useAuth();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [view, setView] = useState<ViewType>('Day');
 
-  // Fetch jobs using SWR
-  const { data: jobs = [], isLoading: loading } = useSWR(
-    !authLoading && user && profile ? ['jobs', profile.role, user.id] : null,
-    async () => {
-      return await jobService.fetchJobs({
-        role: profile?.role,
-        userId: user?.id
-      });
-    },
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 10000,
-    }
-  );
+  const { jobs, isLoading: loading } = useJobs();
 
   const dayLabelFull = selectedDate.toLocaleDateString('en-AU', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
   const dayLabelShort = selectedDate.toLocaleDateString('en-AU', { month: 'short', day: 'numeric' });

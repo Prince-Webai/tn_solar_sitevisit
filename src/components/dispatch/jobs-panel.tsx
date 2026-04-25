@@ -78,27 +78,14 @@ function JobCard({ job, onDoubleClick }: { job: Job; onDoubleClick: () => void }
   );
 }
 
-import useSWR from 'swr';
+import { useJobs } from '@/hooks/use-jobs';
 
 export function JobsPanel({ onJobDoubleClick, refreshKey }: JobsPanelProps) {
   const { user, profile, loading: authLoading } = useAuth();
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('All Jobs');
 
-  // Fetch jobs using SWR for global caching and easy revalidation
-  const { data: jobs = [], isLoading: loading } = useSWR(
-    !authLoading && user && profile ? ['jobs', profile.role, user.id] : null,
-    async () => {
-      return await jobService.fetchJobs({
-        role: profile?.role,
-        userId: user?.id
-      });
-    },
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 10000,
-    }
-  );
+  const { jobs, isLoading: loading } = useJobs();
 
   const filteredJobs = jobs.filter(j => {
     if (filter === 'Quotes' && j.status !== 'Lead') return false;

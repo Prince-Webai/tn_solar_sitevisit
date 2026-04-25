@@ -39,6 +39,7 @@ const createJobIcon = (isCaptured: boolean) => `data:image/svg+xml;charset=UTF-8
 `)}`;
 
 import useSWR from 'swr';
+import { useJobs } from '@/hooks/use-jobs';
 
 export function DispatchMap({ onNewJob, refreshKey }: { onNewJob: () => void; refreshKey?: number }) {
   const { user, profile, loading: authLoading } = useAuth();
@@ -49,20 +50,7 @@ export function DispatchMap({ onNewJob, refreshKey }: { onNewJob: () => void; re
   const [selectedStaff, setSelectedStaff] = useState<StaffLocation | null>(null);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
-  // Fetch jobs using SWR
-  const { data: jobs = [] } = useSWR(
-    isLoaded && !authLoading && user && profile ? ['jobs', profile.role, user.id] : null,
-    async () => {
-      return await jobService.fetchJobs({
-        role: profile?.role,
-        userId: user?.id
-      });
-    },
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 10000,
-    }
-  );
+  const { jobs } = useJobs();
 
   // Fetch staff locations using SWR
   const { data: staffLocations = [] } = useSWR(

@@ -39,7 +39,9 @@ const STEPS = [
   { id: 6, title: 'Declaration & Submission', icon: CheckCircle2 },
 ];
 
+import { useJobs } from "@/hooks/use-jobs";
 export function SiteVisitForm({ jobId, onSuccess }: { jobId?: string, onSuccess?: () => void }) {
+  const { revalidateJobs } = useJobs();
   const { t, i18n } = useTranslation();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);

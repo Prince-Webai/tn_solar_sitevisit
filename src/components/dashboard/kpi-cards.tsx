@@ -32,26 +32,13 @@ function AnimatedCounter({ value, prefix = '' }: { value: number; prefix?: strin
 }
 
 import useSWR from 'swr';
-import { useAuth } from '@/components/providers/auth-provider';
+import { useJobs } from '@/hooks/use-jobs';
 
 export function KpiCards() {
   const { user, profile, loading: authLoading } = useAuth();
   const supabase = createClient();
 
-  // Fetch jobs using the same key as ActionKanban to benefit from deduplication
-  const { data: jobs = [] } = useSWR(
-    !authLoading && user && profile ? ['jobs', profile.role, user.id] : null,
-    async () => {
-      return await jobService.fetchJobs({ 
-        role: profile?.role, 
-        userId: user?.id 
-      });
-    },
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 10000,
-    }
-  );
+  const { jobs } = useJobs();
 
   // Fetch profiles separately
   const { data: profiles = [] } = useSWR(

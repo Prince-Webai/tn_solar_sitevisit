@@ -36,7 +36,7 @@ const QUEUE_ACTIONS = [
   { label: 'Service', icon: Wrench, tab: 'queues' },
 ];
 
-import { mutate } from 'swr';
+import { useJobs } from '@/hooks/use-jobs';
 
 export default function DispatchPage() {
   const { user, profile, loading: authLoading } = useAuth();
@@ -46,12 +46,7 @@ export default function DispatchPage() {
   const [addStaffOpen,   setAddStaffOpen]   = useState(false);
   const [selectedJobId,  setSelectedJobId]  = useState<string | undefined>();
   
-  // Revalidate jobs globally
-  const revalidateJobs = () => {
-    if (user && profile) {
-      mutate(['jobs', profile.role, user.id]);
-    }
-  };
+  const { revalidateJobs } = useJobs();
   const [staffMembers,   setStaffMembers]   = useState<any[]>([]);
   const supabase = createClient();
 

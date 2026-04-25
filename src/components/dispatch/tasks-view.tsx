@@ -8,24 +8,10 @@ interface TasksViewProps {
   refreshKey?: number;
 }
 
-import useSWR from 'swr';
+import { useJobs } from '@/hooks/use-jobs';
 
 export function TasksView({ onJobClick, refreshKey }: TasksViewProps) {
-  const { user, profile, loading: authLoading } = useAuth();
-
-  const { data: jobs = [], isLoading: loading } = useSWR(
-    !authLoading && user && profile ? ['jobs', profile.role, user.id] : null,
-    async () => {
-      return await jobService.fetchJobs({
-        role: profile?.role,
-        userId: user?.id
-      });
-    },
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 10000,
-    }
-  );
+  const { jobs, isLoading: loading } = useJobs();
 
   const jobsWithTasks = jobs.filter(j =>
     !['Completed', 'Cancelled', 'Archived'].includes(j.status)

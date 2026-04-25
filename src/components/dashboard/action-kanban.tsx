@@ -44,24 +44,10 @@ interface ActionKanbanProps {
   onJobClick?: (jobId: string) => void;
 }
 
-import useSWR from 'swr';
+import { useJobs } from '@/hooks/use-jobs';
 
 export function ActionKanban({ onJobClick }: ActionKanbanProps) {
-  const { user, profile, loading: authLoading } = useAuth();
-  
-  const { data: jobs = [], error, isLoading, isValidating } = useSWR(
-    !authLoading && user && profile ? ['jobs', profile.role, user.id] : null,
-    async () => {
-      return await jobService.fetchJobs({ 
-        role: profile?.role, 
-        userId: user?.id 
-      });
-    },
-    {
-      revalidateOnFocus: false,
-      dedupingInterval: 10000,
-    }
-  );
+  const { jobs, isLoading, isValidating } = useJobs();
 
   if (authLoading) {
     return (

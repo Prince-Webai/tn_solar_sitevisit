@@ -10,21 +10,15 @@ import { ActionKanban } from '@/components/dashboard/action-kanban';
 import { MapPreview } from '@/components/dashboard/map-preview';
 import { JobModal } from '@/components/job-modal/job-modal';
 import { BookSiteVisitDialog } from '@/components/job-modal/book-site-visit-dialog';
-
-import { mutate } from 'swr';
+import { useJobs } from '@/hooks/use-jobs';
 
 export default function DashboardPage() {
-  const { user, profile, loading: authLoading } = useAuth();
+  const { profile, loading: authLoading } = useAuth();
   const [jobModalOpen,   setJobModalOpen]   = useState(false);
   const [bookDialogOpen, setBookDialogOpen] = useState(false);
   const [selectedJobId,  setSelectedJobId]  = useState<string | undefined>();
   
-  // Revalidate jobs across all components
-  const revalidateJobs = () => {
-    if (user && profile) {
-      mutate(['jobs', profile.role, user.id]);
-    }
-  };
+  const { revalidateJobs } = useJobs();
 
   if (authLoading) {
     return (
