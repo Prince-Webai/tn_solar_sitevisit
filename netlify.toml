@@ -3,8 +3,9 @@
 # ============================================================
 
 [build]
-  command   = "npm run build"
-  publish   = ".next"
+  command                           = "npm run build"
+  publish                           = ".next"
+  edge_functions_node_compatibility = true
 
 [build.environment]
   NODE_VERSION            = "20"
@@ -20,12 +21,6 @@
   node_bundler           = "esbuild"
   external_node_modules  = ["@supabase/supabase-js", "@supabase/ssr"]
   included_files         = ["public/**"]
-
-# ── Edge Functions (proxy/middleware runtime) ─────────────────
-# Force Node.js compatibility mode for the middleware edge function
-# This prevents Deno runtime errors with @supabase/ssr
-[edge_functions]
-  node_compatibility = true
 
 # ── Security & Cache Headers ─────────────────────────────────
 
