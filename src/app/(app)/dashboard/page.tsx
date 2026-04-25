@@ -11,12 +11,20 @@ import { MapPreview } from '@/components/dashboard/map-preview';
 import { JobModal } from '@/components/job-modal/job-modal';
 import { BookSiteVisitDialog } from '@/components/job-modal/book-site-visit-dialog';
 
+import { mutate } from 'swr';
+
 export default function DashboardPage() {
-  const { profile, loading: authLoading } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const [jobModalOpen,   setJobModalOpen]   = useState(false);
   const [bookDialogOpen, setBookDialogOpen] = useState(false);
   const [selectedJobId,  setSelectedJobId]  = useState<string | undefined>();
-  const [refreshKey,     setRefreshKey]     = useState(0);
+  
+  // Revalidate jobs across all components
+  const revalidateJobs = () => {
+    if (user && profile) {
+      mutate(['jobs', profile.role, user.id]);
+    }
+  };
 
   if (authLoading) {
     return (
@@ -65,14 +73,14 @@ export default function DashboardPage() {
             <WeatherWidget />
           </div>
           <div className="lg:col-span-3">
-            <KpiCards key={refreshKey} />
+            <KpiCards />
           </div>
         </div>
 
         {/* Bottom Row: Kanban + Map */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2">
-            <ActionKanban onJobClick={handleJobClick} key={refreshKey} />
+            <ActionKanban onJobClick={handleJobClick} />
           </div>
           <div className="lg:col-span-1">
             <div className="h-[300px] lg:h-full min-h-[400px]">
@@ -86,7 +94,7 @@ export default function DashboardPage() {
       <BookSiteVisitDialog
         open={bookDialogOpen}
         onOpenChange={setBookDialogOpen}
-        onSuccess={() => setRefreshKey(k => k + 1)}
+        onSuccess={revalidateJobs}
       />
 
       {/* Job detail modal — opens when clicking existing job */}
@@ -94,6 +102,7 @@ export default function DashboardPage() {
         open={jobModalOpen}
         onOpenChange={setJobModalOpen}
         jobId={selectedJobId}
+        onSuccess={revalidateJobs}
       />
     </>
   );

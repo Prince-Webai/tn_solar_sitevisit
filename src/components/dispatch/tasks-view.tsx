@@ -8,28 +8,24 @@ interface TasksViewProps {
   refreshKey?: number;
 }
 
+import useSWR from 'swr';
+
 export function TasksView({ onJobClick, refreshKey }: TasksViewProps) {
   const { user, profile, loading: authLoading } = useAuth();
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadJobs() {
-      if (!user || !profile) return;
-      try {
-        const data = await jobService.fetchJobs({
-          role: profile.role,
-          userId: user.id
-        });
-        setJobs(data);
-      } catch (error) {
-        console.error('Failed to load tasks:', error);
-      } finally {
-        setLoading(false);
-      }
+  const { data: jobs = [], isLoading: loading } = useSWR(
+    !authLoading && user && profile ? ['jobs', profile.role, user.id] : null,
+    async () => {
+      return await jobService.fetchJobs({
+        role: profile?.role,
+        userId: user?.id
+      });
+    },
+    {
+      revalidateOnFocus: false,
+      dedupingInterval: 10000,
     }
-    if (!authLoading) loadJobs();
-  }, [refreshKey, user, profile, authLoading]);
+  );
 
   const jobsWithTasks = jobs.filter(j =>
     !['Completed', 'Cancelled', 'Archived'].includes(j.status)

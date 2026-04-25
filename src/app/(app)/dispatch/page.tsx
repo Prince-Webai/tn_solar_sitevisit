@@ -36,6 +36,8 @@ const QUEUE_ACTIONS = [
   { label: 'Service', icon: Wrench, tab: 'queues' },
 ];
 
+import { mutate } from 'swr';
+
 export default function DispatchPage() {
   const { user, profile, loading: authLoading } = useAuth();
   const [activeTab,      setActiveTab]      = useState<TabId>('tasks');
@@ -43,7 +45,13 @@ export default function DispatchPage() {
   const [bookDialogOpen, setBookDialogOpen] = useState(false);
   const [addStaffOpen,   setAddStaffOpen]   = useState(false);
   const [selectedJobId,  setSelectedJobId]  = useState<string | undefined>();
-  const [refreshKey,     setRefreshKey]     = useState(0);
+  
+  // Revalidate jobs globally
+  const revalidateJobs = () => {
+    if (user && profile) {
+      mutate(['jobs', profile.role, user.id]);
+    }
+  };
   const [staffMembers,   setStaffMembers]   = useState<any[]>([]);
   const supabase = createClient();
 
@@ -75,8 +83,6 @@ export default function DispatchPage() {
     }
     if (!authLoading) loadStaff();
   }, [refreshKey, user, profile, authLoading, isEngineer, supabase]);
-
-  const handleRefresh = () => setRefreshKey(prev => prev + 1);
 
   const handleJobDoubleClick = (jobId: string) => {
     setSelectedJobId(jobId);
@@ -185,16 +191,16 @@ export default function DispatchPage() {
         {/* ── Main View Content ── */}
         <div className="flex flex-1 min-h-0 overflow-hidden relative">
           <div className="flex-1 min-w-0 overflow-auto bg-off-white/20">
-            {activeTab === 'map'       && <DispatchMap refreshKey={refreshKey} onNewJob={() => setBookDialogOpen(true)} />}
-            {activeTab === 'tasks'     && <TasksView refreshKey={refreshKey} onJobClick={handleJobDoubleClick} />}
-            {activeTab === 'calendar'  && <CalendarView refreshKey={refreshKey} onJobClick={handleJobDoubleClick} />}
-            {activeTab === 'schedules' && <StaffScheduleView refreshKey={refreshKey} onJobClick={handleJobDoubleClick} onScheduleUpdate={handleRefresh} />}
-            {activeTab === 'queues'    && <QueuesView refreshKey={refreshKey} onJobClick={handleJobDoubleClick} />}
+            {activeTab === 'map'       && <DispatchMap onNewJob={() => setBookDialogOpen(true)} />}
+            {activeTab === 'tasks'     && <TasksView onJobClick={handleJobDoubleClick} />}
+            {activeTab === 'calendar'  && <CalendarView onJobClick={handleJobDoubleClick} />}
+            {activeTab === 'schedules' && <StaffScheduleView onJobClick={handleJobDoubleClick} onScheduleUpdate={revalidateJobs} />}
+            {activeTab === 'queues'    && <QueuesView onJobClick={handleJobDoubleClick} />}
           </div>
 
           {/* Jobs Panel (Desktop Only) */}
           <div className="hidden lg:block">
-            <JobsPanel onJobDoubleClick={handleJobDoubleClick} refreshKey={refreshKey} />
+            <JobsPanel onJobDoubleClick={handleJobDoubleClick} />
           </div>
 
           {/* Mobile Drawer Toggle */}
@@ -212,16 +218,16 @@ export default function DispatchPage() {
           />
             <SheetContent side="right" className="p-0 w-[300px] max-w-[85vw] border-none">
               <div className="h-full pt-10">
-                <JobsPanel onJobDoubleClick={handleJobDoubleClick} refreshKey={refreshKey} />
+                <JobsPanel onJobDoubleClick={handleJobDoubleClick} />
               </div>
             </SheetContent>
           </Sheet>
         </div>
       </div>
 
-      <BookSiteVisitDialog open={bookDialogOpen} onOpenChange={setBookDialogOpen} onSuccess={handleRefresh} />
-      <JobModal open={jobModalOpen} onOpenChange={setJobModalOpen} jobId={selectedJobId} onSuccess={handleRefresh} />
-      <AddStaffDialog open={addStaffOpen} onOpenChange={setAddStaffOpen} onSuccess={handleRefresh} />
+      <BookSiteVisitDialog open={bookDialogOpen} onOpenChange={setBookDialogOpen} onSuccess={revalidateJobs} />
+      <JobModal open={jobModalOpen} onOpenChange={setJobModalOpen} jobId={selectedJobId} onSuccess={revalidateJobs} />
+      <AddStaffDialog open={addStaffOpen} onOpenChange={setAddStaffOpen} onSuccess={revalidateJobs} />
     </>
   );
 }
