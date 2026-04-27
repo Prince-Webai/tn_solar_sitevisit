@@ -38,7 +38,7 @@ export default function SettingsPage() {
       const json = await res.json();
       
       // 2. Regardless of API success, always fetch from the public profiles table
-      // This ensures the list shows up even if the Admin Key is missing on Netlify
+      // This ensures the list shows up even if the Admin Key is missing on the Deployment platform
       const { createClient } = await import('@/lib/supabase/client');
       const supabase = createClient();
       const { data: profiles, error: profileError } = await supabase

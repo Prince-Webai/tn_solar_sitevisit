@@ -50,7 +50,7 @@ export function AddUserDialog({ onSuccess }: { onSuccess: () => void }) {
       onSuccess();
     } catch (err: any) {
       if (err.message?.includes('supabaseKey is required')) {
-        toast.error('Production Error: SUPABASE_SERVICE_ROLE_KEY is missing in Netlify settings.');
+        toast.error('Production Error: SUPABASE_SERVICE_ROLE_KEY is missing in Project Environment Variables.');
       } else {
         toast.error(err.message || 'Failed to create user');
       }

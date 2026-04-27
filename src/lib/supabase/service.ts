@@ -163,7 +163,19 @@ export const jobService = {
         .select()
         .single();
 
-      if (!error) return data as Job;
+      if (!error) {
+        // Auto-log activity
+        if (userId && data) {
+          this.logActivity({
+            userId,
+            action: 'job_created',
+            entityType: 'job',
+            entityId: data.id,
+            details: `Created new Job #${data.job_number} for ${job.contact_name}`
+          }).catch(err => console.error('Silent logging failure:', err));
+        }
+        return data as Job;
+      }
 
       // If it's a unique constraint violation on job_number, try again
       if (error.code === '23505' && error.message?.includes('job_number')) {
@@ -178,20 +190,6 @@ export const jobService = {
     }
 
     throw lastError || new Error('Failed to generate a unique job number after multiple attempts.');
-  },
-
-    // Auto-log activity
-    if (userId && data) {
-      this.logActivity({
-        userId,
-        action: 'job_created',
-        entityType: 'job',
-        entityId: data.id,
-        details: `Created new Job #${data.job_number} for ${job.contact_name}`
-      }).catch(err => console.error('Silent logging failure:', err));
-    }
-
-    return data as Job;
   },
 
   /**
