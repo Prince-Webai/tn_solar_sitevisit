@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -61,6 +61,7 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [jobNumber, setJobNumber] = useState('');
+  const isSubmitting = useRef(false);
 
   const set = (field: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | string) => {
     if (typeof e === 'string') {
@@ -80,33 +81,54 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
   };
 
   const handleSubmit = async () => {
+    if (isSubmitting.current) {
+      console.warn('Booking already in progress, ignoring double-click.');
+      return;
+    }
+
     if (!form.firstName.trim()) { toast.error('Customer first name is required'); return; }
     if (!form.phone.trim())     { toast.error('Phone number is required'); return; }
     if (!form.address.trim())   { toast.error('Site address is required'); return; }
 
     try {
+      isSubmitting.current = true;
       setLoading(true);
+      console.log('Starting site visit booking process for:', form.firstName, form.lastName);
 
       const supabase = createClient();
 
-      // 1. Resolve user display name in parallel with client creation
+      // 1. Resolve user display name (Profile lookup)
+      // We do this first so we have the name for the audit log
+      let userName = 'Sales Staff';
+      if (user) {
+        console.log('Fetching user profile for logging...');
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', user.id)
+            .maybeSingle();
+          if (profile?.full_name) userName = profile.full_name;
+        } catch (profileErr) {
+          console.warn('Non-critical: Failed to fetch profile for logging:', profileErr);
+        }
+      }
+
+      // 2. Create the Client
+      console.log('Creating client record...');
       const clientEmail = form.email.trim() || `${form.firstName.toLowerCase().replace(/\s+/g, '.')}.${Date.now()}@tnsolar.com`;
+      const client = await jobService.createClient({
+        first_name: form.firstName.trim(),
+        last_name:  form.lastName.trim() || '-',
+        email:      clientEmail,
+        phone:      form.phone.trim(),
+        address:    form.address.trim(),
+        district:   form.district,
+      });
+      console.log('Client created with ID:', client.id);
 
-      const [client, profileResult] = await Promise.all([
-        jobService.createClient({
-          first_name: form.firstName.trim(),
-          last_name:  form.lastName.trim() || '-',
-          email:      clientEmail,
-          phone:      form.phone.trim(),
-          address:    form.address.trim(),
-          district:   form.district,
-        }),
-        user
-          ? supabase.from('profiles').select('full_name').eq('id', user.id).maybeSingle()
-          : Promise.resolve({ data: null })
-      ]);
-
-      // 2. Create the job as a Site Assessment
+      // 3. Create the Job
+      console.log('Creating job record...');
       const job = await jobService.createJob({
         client_id:           client.id,
         address:             form.address.trim(),
@@ -120,10 +142,10 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
         requires_site_visit: true,
         materials_status:    'Pending'
       });
+      console.log('Job created successfully:', job.job_number);
 
-      // 3. Fire-and-forget audit log — do NOT await, keeps UI snappy
+      // 4. Fire-and-forget audit log
       if (user) {
-        const userName = (profileResult as any)?.data?.full_name || 'Sales Staff';
         supabase.from('audit_logs').insert({
           user_id:     user.id,
           user_name:   userName,
@@ -138,12 +160,17 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
 
       setJobNumber(job.job_number);
       setDone(true);
+      
+      console.log('Booking complete. Triggering onSuccess callback.');
       onSuccess?.();
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to book site visit. Please try again.');
+    } catch (err: any) {
+      console.error('Booking process failed:', err);
+      // Detailed error for Lokesh to see on his machine
+      const errorMsg = err.message || 'Unknown database error';
+      toast.error(`Failed to book site visit: ${errorMsg}. Please check your connection or contact support.`);
     } finally {
       setLoading(false);
+      isSubmitting.current = false;
     }
   };
 

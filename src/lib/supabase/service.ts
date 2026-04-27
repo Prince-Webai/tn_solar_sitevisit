@@ -146,22 +146,39 @@ export const jobService = {
     const supabase = createClient();
     
     // Generate a unique job number: TN + Phone Digits + Random Suffix
-    const phoneDigits = job.contact_phone ? job.contact_phone.replace(/\D/g, '').slice(-10) : '';
-    const suffix = Math.floor(100 + Math.random() * 899);
-    const jobNumber = phoneDigits 
-      ? `TN-${phoneDigits}-${suffix}` 
-      : `TN-${Date.now().toString().slice(-6)}-${suffix}`;
-    
-    const { data, error } = await supabase
-      .from('jobs')
-      .insert({ ...job, job_number: jobNumber })
-      .select()
-      .single();
+    // We'll try up to 3 times in case of a rare random collision
+    let attempts = 0;
+    let lastError = null;
 
-    if (error) {
+    while (attempts < 3) {
+      const phoneDigits = job.contact_phone ? job.contact_phone.replace(/\D/g, '').slice(-10) : '';
+      const suffix = Math.floor(1000 + Math.random() * 8999); // 4 digits for better uniqueness
+      const jobNumber = phoneDigits 
+        ? `TN-${phoneDigits}-${suffix}` 
+        : `TN-${Date.now().toString().slice(-6)}-${suffix}`;
+      
+      const { data, error } = await supabase
+        .from('jobs')
+        .insert({ ...job, job_number: jobNumber })
+        .select()
+        .single();
+
+      if (!error) return data as Job;
+
+      // If it's a unique constraint violation on job_number, try again
+      if (error.code === '23505' && error.message?.includes('job_number')) {
+        attempts++;
+        lastError = error;
+        continue;
+      }
+
+      // Otherwise, it's a real error (RLS, etc.), so throw it
       console.error('Error creating job:', error);
       throw error;
     }
+
+    throw lastError || new Error('Failed to generate a unique job number after multiple attempts.');
+  },
 
     // Auto-log activity
     if (userId && data) {
