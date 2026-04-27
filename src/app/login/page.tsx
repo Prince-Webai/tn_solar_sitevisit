@@ -50,7 +50,7 @@ export default function LoginPage() {
       const redirectTo = params.get('redirect') || '/dashboard';
 
       // Use a hard redirect to ensure the session is picked up by middleware correctly on production
-      window.location.href = redirectTo;
+      router.push(redirectTo);
     } catch {
       setError('Something went wrong. Please try again.');
     } finally {

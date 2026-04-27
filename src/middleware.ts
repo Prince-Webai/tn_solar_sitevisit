@@ -1,17 +1,13 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Pass through all non-protected routes immediately — no Supabase call needed
   const publicRoutes = ['/login', '/api', '/setup-admin', '/_next', '/favicon'];
   const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route));
 
-  if (isPublicRoute) {
-    return NextResponse.next({ request });
-  }
-
-  // For protected routes, check for the presence of a Supabase auth cookie
+  // Check for the presence of a Supabase auth cookie
   // instead of calling supabase.auth.getUser() which can crash in edge runtime
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const projectRef = supabaseUrl?.match(/https:\/\/([^.]+)\.supabase/)?.[1];
@@ -21,6 +17,14 @@ export async function proxy(request: NextRequest) {
   const hasSession = cookies.some(
     c => c.name.includes('sb-') && c.name.includes('-auth-token')
   );
+
+  if (isPublicRoute) {
+    // If user is already logged in and tries to access login, send them to dashboard
+    if (hasSession && pathname === '/login') {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+    return NextResponse.next({ request });
+  }
 
   // Redirect root based on session presence
   if (pathname === '/') {
