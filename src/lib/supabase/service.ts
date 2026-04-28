@@ -1,3 +1,6 @@
+"use server";
+
+import crypto from 'crypto';
 import connectToDatabase from '../mongodb';
 import { Job as JobModel, Client as ClientModel, Profile as ProfileModel, AuditLog as AuditLogModel, JobChecklist as JobChecklistModel } from '../models';
 import type { Job, Client } from '../types';
