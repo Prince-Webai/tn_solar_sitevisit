@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import connectToDatabase from '@/lib/mongodb';
+import { Profile as ProfileModel } from '@/lib/models';
 
 const getAdminClient = () =>
   createClient(
@@ -30,8 +32,9 @@ export async function PATCH(
       const updates: Record<string, string> = {};
       if (role) updates.role = role;
       if (fullName) updates.full_name = fullName;
-      const { error } = await supabase.from('profiles').update(updates).eq('id', userId);
-      if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+      
+      await connectToDatabase();
+      await ProfileModel.findByIdAndUpdate(userId, { $set: updates });
     }
 
     return NextResponse.json({ success: true });
@@ -49,7 +52,9 @@ export async function DELETE(
     const { id: userId } = await params;
     const supabase = getAdminClient();
 
-    await supabase.from('profiles').delete().eq('id', userId);
+    await connectToDatabase();
+    await ProfileModel.findByIdAndDelete(userId);
+    
     const { error } = await supabase.auth.admin.deleteUser(userId);
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
 

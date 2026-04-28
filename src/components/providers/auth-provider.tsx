@@ -51,13 +51,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   async function fetchProfile(userId: string) {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-    
-    if (data) setProfile(data as Profile);
+    try {
+      const response = await fetch(`/api/auth/profile?userId=${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setProfile(data as Profile);
+      } else {
+        console.warn('Profile not found in MongoDB for user:', userId);
+      }
+    } catch (err) {
+      console.error('Failed to fetch profile from MongoDB:', err);
+    }
   }
 
   const signOut = async () => {

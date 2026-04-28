@@ -1,42 +1,49 @@
-import { createClient } from './client';
+import connectToDatabase from '../mongodb';
+import { Job as JobModel, Client as ClientModel, Profile as ProfileModel, AuditLog as AuditLogModel, JobChecklist as JobChecklistModel } from '../models';
 import type { Job, Client } from '../types';
+
+/**
+ * Helper to convert Mongo document to App Type (mapping _id to id)
+ */
+const mapDoc = (doc: any) => {
+  if (!doc) return null;
+  // Handle both Mongoose documents and plain objects
+  const obj = doc.toObject ? doc.toObject() : doc;
+  const { _id, ...rest } = obj;
+  return { id: _id, ...rest };
+};
 
 export const jobService = {
   /**
    * Fetch all jobs with their associated client data, optionally filtered by role/user
    */
   async fetchJobs(filters?: { assigned_to?: string; role?: string; userId?: string; statuses?: string[]; fields?: string }) {
-    const supabase = createClient();
+    await connectToDatabase();
     try {
-      const selectFields = filters?.fields || `
-          *,
-          client:clients(*),
-          assigned_staff:profiles(*)
-        `;
-      
-      let query = supabase
-        .from('jobs')
-        .select(selectFields);
+      let query: any = {};
       
       // Auto-filter for Engineers/Technicians if role/userId provided
       if (filters?.role === 'Engineer' || filters?.role === 'Technician') {
-        query = query.eq('assigned_to', filters.userId);
+        query.assigned_to = filters.userId;
       } else if (filters?.assigned_to) {
-        query = query.eq('assigned_to', filters.assigned_to);
+        query.assigned_to = filters.assigned_to;
       }
 
       if (filters?.statuses && filters.statuses.length > 0) {
-        query = query.in('status', filters.statuses);
+        query.status = { $in: filters.statuses };
       }
 
-      const { data, error } = await query.order('created_at', { ascending: false });
+      const jobs = await JobModel.find(query)
+        .populate('client_id')
+        .populate('assigned_to')
+        .sort({ created_at: -1 });
 
-      if (error) {
-        console.error('Error fetching jobs:', error);
-        return []; // Return empty instead of hanging
-      }
-
-      return (data || []) as Job[];
+      return jobs.map(job => {
+        const mapped = mapDoc(job);
+        if (job.client_id) mapped.client = mapDoc(job.client_id);
+        if (job.assigned_to) mapped.assigned_staff = mapDoc(job.assigned_to);
+        return mapped;
+      }) as Job[];
     } catch (err) {
       console.error('Unexpected error in fetchJobs:', err);
       return [];
@@ -47,23 +54,14 @@ export const jobService = {
    * Fetch a single job by ID with client data
    */
   async fetchJobById(jobId: string) {
-    const supabase = createClient();
+    await connectToDatabase();
     try {
-      const { data, error } = await supabase
-        .from('jobs')
-        .select(`
-          *,
-          client:clients(*)
-        `)
-        .eq('id', jobId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching job by ID:', error);
-        return null;
-      }
-
-      return data as Job;
+      const job = await JobModel.findById(jobId).populate('client_id');
+      if (!job) return null;
+      
+      const mapped = mapDoc(job);
+      if (job.client_id) mapped.client = mapDoc(job.client_id);
+      return mapped as Job;
     } catch (err) {
       console.error('Unexpected error in fetchJobById:', err);
       return null;
@@ -74,24 +72,20 @@ export const jobService = {
    * Fetch unscheduled jobs
    */
   async fetchUnscheduledJobs() {
-    const supabase = createClient();
+    await connectToDatabase();
     try {
-      const { data, error } = await supabase
-        .from('jobs')
-        .select(`
-          *,
-          client:clients(*)
-        `)
-        .is('scheduled_date', null)
-        .not('status', 'in', '("Completed", "Cancelled", "Unsuccessful")')
-        .order('created_at', { ascending: false });
+      const jobs = await JobModel.find({
+        scheduled_date: null,
+        status: { $nin: ["Completed", "Cancelled", "Unsuccessful"] }
+      })
+      .populate('client_id')
+      .sort({ created_at: -1 });
 
-      if (error) {
-        console.error('Error fetching unscheduled jobs:', error);
-        return [];
-      }
-
-      return (data || []) as Job[];
+      return jobs.map(job => {
+        const mapped = mapDoc(job);
+        if (job.client_id) mapped.client = mapDoc(job.client_id);
+        return mapped;
+      }) as Job[];
     } catch (err) {
       console.error('Unexpected error in fetchUnscheduledJobs:', err);
       return [];
@@ -102,18 +96,12 @@ export const jobService = {
    * Update a job's status or other fields
    */
   async updateJob(jobId: string, updates: Partial<Job>, userId?: string) {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from('jobs')
-      .update(updates)
-      .eq('id', jobId)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error updating job:', error);
-      throw error;
-    }
+    await connectToDatabase();
+    // Remove id from updates to avoid Mongo error if it's passed in
+    const { id, ...cleanUpdates } = updates as any;
+    
+    const job = await JobModel.findByIdAndUpdate(jobId, { $set: cleanUpdates }, { new: true });
+    if (!job) throw new Error('Job not found');
 
     // Auto-log activity
     if (userId) {
@@ -126,7 +114,7 @@ export const jobService = {
       }).catch(err => console.error('Silent logging failure:', err));
     }
 
-    return data as Job;
+    return mapDoc(job) as Job;
   },
 
   /**
@@ -136,303 +124,204 @@ export const jobService = {
     return this.updateJob(jobId, {
       assigned_to: staffId,
       scheduled_date: scheduledDate,
-    });
+    } as any, userId);
   },
 
   /**
    * Create a new job
    */
   async createJob(job: Omit<Job, 'id' | 'created_at' | 'updated_at' | 'job_number'>, userId?: string) {
-    const supabase = createClient();
+    await connectToDatabase();
     
-    // Generate a unique job number: TN + Phone Digits + Random Suffix
-    // We'll try up to 3 times in case of a rare random collision
     let attempts = 0;
     let lastError = null;
 
     while (attempts < 3) {
       const phoneDigits = job.contact_phone ? job.contact_phone.replace(/\D/g, '').slice(-10) : '';
-      const suffix = Math.floor(1000 + Math.random() * 8999); // 4 digits for better uniqueness
+      const suffix = Math.floor(1000 + Math.random() * 8999);
       const jobNumber = phoneDigits 
         ? `TN-${phoneDigits}-${suffix}` 
         : `TN-${Date.now().toString().slice(-6)}-${suffix}`;
       
-      const { data, error } = await supabase
-        .from('jobs')
-        .insert({ ...job, job_number: jobNumber })
-        .select()
-        .single();
+      try {
+        const newJob = new JobModel({
+          ...job,
+          _id: crypto.randomUUID(), 
+          job_number: jobNumber
+        });
+        const saved = await newJob.save();
 
-      if (!error) {
-        // Auto-log activity
-        if (userId && data) {
+        if (userId) {
           this.logActivity({
             userId,
             action: 'job_created',
             entityType: 'job',
-            entityId: data.id,
-            details: `Created new Job #${data.job_number} for ${job.contact_name}`
+            entityId: saved._id,
+            details: `Created new Job #${saved.job_number} for ${job.contact_name}`
           }).catch(err => console.error('Silent logging failure:', err));
         }
-        return data as Job;
+        return mapDoc(saved) as Job;
+      } catch (error: any) {
+        if (error.code === 11000 && error.message?.includes('job_number')) {
+          attempts++;
+          lastError = error;
+          continue;
+        }
+        throw error;
       }
-
-      // If it's a unique constraint violation on job_number, try again
-      if (error.code === '23505' && error.message?.includes('job_number')) {
-        attempts++;
-        lastError = error;
-        continue;
-      }
-
-      // Otherwise, it's a real error (RLS, etc.), so throw it
-      console.error('Error creating job:', error);
-      throw error;
     }
-
-    throw lastError || new Error('Failed to generate a unique job number after multiple attempts.');
+    throw lastError || new Error('Failed to generate a unique job number');
   },
 
   /**
    * Delete a job and its associated data
    */
   async deleteJob(jobId: string) {
-    const supabase = createClient();
-    
-    // 1. Delete checklist items first (foreign key)
-    await supabase.from('job_checklist').delete().eq('job_id', jobId);
-    
-    // 2. Delete site visits if any
-    await supabase.from('site_visits').delete().eq('job_id', jobId);
-    
-    // 3. Delete the job itself
-    const { error } = await supabase
-      .from('jobs')
-      .delete()
-      .eq('id', jobId);
-
-    if (error) {
-      console.error('Error deleting job:', error);
-      throw error;
-    }
+    await connectToDatabase();
+    // Delete checklist items first
+    await JobChecklistModel.deleteMany({ job_id: jobId });
+    // Delete the job
+    await JobModel.findByIdAndDelete(jobId);
   },
 
   /**
    * Save checklist items for a job
    */
   async saveChecklist(jobId: string, items: { text: string; completed: boolean }[]) {
-    const supabase = createClient();
+    await connectToDatabase();
     
-    // First, delete existing items to replace them (simplest way for now)
-    await supabase.from('job_checklist').delete().eq('job_id', jobId);
+    // Replace existing items
+    await JobChecklistModel.deleteMany({ job_id: jobId });
     
     if (items.length === 0) return;
 
     const itemsToInsert = items.map((item, index) => ({
+      _id: crypto.randomUUID(),
       job_id: jobId,
       text: item.text,
       completed: item.completed,
       sort_order: index
     }));
 
-    const { error } = await supabase
-      .from('job_checklist')
-      .insert(itemsToInsert);
-
-    if (error) {
-      console.error('Error saving checklist:', error);
-      throw error;
-    }
+    await JobChecklistModel.insertMany(itemsToInsert);
   },
 
   /**
    * Fetch checklist items for a job
    */
   async fetchChecklist(jobId: string) {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from('job_checklist')
-      .select('*')
-      .eq('job_id', jobId)
-      .order('sort_order', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching checklist:', error);
-      throw error;
-    }
-
-    return data;
+    await connectToDatabase();
+    const items = await JobChecklistModel.find({ job_id: jobId }).sort({ sort_order: 1 });
+    return items.map(mapDoc);
   },
 
   /**
    * Create a new client
    */
   async createClient(client: Omit<Client, 'id' | 'created_at'>) {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from('clients')
-      .insert(client)
-      .select()
-      .single();
-
-    if (error) {
-      console.error('Error creating client:', error);
-      throw error;
-    }
-
-    return data as Client;
+    await connectToDatabase();
+    const newClient = new ClientModel({
+      ...client,
+      _id: crypto.randomUUID()
+    });
+    const saved = await newClient.save();
+    return mapDoc(saved) as Client;
   },
 
   /**
    * Fetch all staff locations
    */
   async fetchStaffLocations() {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from('staff_locations')
-      .select(`
-        *,
-        profile:profiles(*)
-      `);
-
-    if (error) {
-      if (error.code === 'PGRST205') {
-        console.warn('Staff locations table not found. Please run the migration.');
-        return [];
-      }
-      console.error('Error fetching staff locations:', error);
-      throw error;
-    }
-
-    return data || [];
+    // Currently placeholder
+    return [];
   },
 
   /**
    * Fetch all clients
    */
   async fetchClients() {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from('clients')
-      .select('*')
-      .order('last_name', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching clients:', error);
-      throw error;
-    }
-
-    return data as Client[];
+    await connectToDatabase();
+    const clients = await ClientModel.find({}).sort({ last_name: 1 });
+    return clients.map(mapDoc) as Client[];
   },
 
   /**
    * Search for jobs and clients
    */
   async search(query: string) {
-    const supabase = createClient();
-    const q = `%${query}%`;
+    await connectToDatabase();
+    const regex = new RegExp(query, 'i');
 
-    try {
-      // Search jobs
-      const { data: jobData, error: jobError } = await supabase
-        .from('jobs')
-        .select('*, client:clients(*)')
-        .or(`job_number.ilike.${q},address.ilike.${q},description.ilike.${q},contact_name.ilike.${q}`)
-        .limit(5);
+    const [jobData, clientData, profileData] = await Promise.all([
+      JobModel.find({
+        $or: [
+          { job_number: regex },
+          { address: regex },
+          { description: regex },
+          { contact_name: regex }
+        ]
+      }).populate('client_id').limit(5),
+      ClientModel.find({
+        $or: [
+          { first_name: regex },
+          { last_name: regex },
+          { email: regex },
+          { phone: regex }
+        ]
+      }).limit(5),
+      ProfileModel.find({
+        $or: [
+          { full_name: regex },
+          { email: regex }
+        ]
+      }).limit(5)
+    ]);
 
-      // Search clients
-      const { data: clientData, error: clientError } = await supabase
-        .from('clients')
-        .select('*')
-        .or(`first_name.ilike.${q},last_name.ilike.${q},email.ilike.${q},phone.ilike.${q}`)
-        .limit(5);
-
-      // Search profiles (staff)
-      const { data: profileData, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .or(`full_name.ilike.${q},email.ilike.${q}`)
-        .limit(5);
-
-      if (jobError || clientError || profileError) {
-        console.error('Search query error:', { jobError, clientError, profileError });
-      }
-
-      return { 
-        jobs: (jobData || []) as Job[], 
-        clients: (clientData || []) as Client[],
-        profiles: (profileData || []) as any[]
-      };
-    } catch (err) {
-      console.error('Search execution error:', err);
-      return { jobs: [], clients: [], profiles: [] };
-    }
+    return { 
+      jobs: jobData.map(j => {
+        const m = mapDoc(j);
+        if (j.client_id) m.client = mapDoc(j.client_id);
+        return m;
+      }) as Job[], 
+      clients: clientData.map(mapDoc) as Client[],
+      profiles: profileData.map(mapDoc) as any[]
+    };
   },
 
   /**
    * Fetch audit logs for a specific job
    */
   async fetchAuditLogsByJobId(jobId: string) {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from('audit_logs')
-      .select('*')
-      .eq('entity_id', jobId)
-      .eq('entity_type', 'job')
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Error fetching job logs:', error);
-      return [];
-    }
-
-    return data;
+    await connectToDatabase();
+    const logs = await AuditLogModel.find({ entity_id: jobId, entity_type: 'job' }).sort({ created_at: -1 });
+    return logs.map(mapDoc);
   },
 
   /**
    * Fetch audit logs for system activity
    */
   async fetchAuditLogs() {
-    const supabase = createClient();
-    const { data, error } = await supabase
-      .from('audit_logs')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(50);
-
-    if (error) {
-      console.error('Error fetching audit logs:', error);
-      return [];
-    }
-
-    return data;
+    await connectToDatabase();
+    const logs = await AuditLogModel.find({}).sort({ created_at: -1 }).limit(50);
+    return logs.map(mapDoc);
   },
 
   /**
    * Log a system activity/audit event
    */
   async logActivity(params: { userId: string; action: string; entityType: string; entityId?: string; details?: string }) {
-    const supabase = createClient();
+    await connectToDatabase();
+    const profile = await ProfileModel.findById(params.userId);
     
-    // Get user name for the log safely
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('id', params.userId)
-      .maybeSingle();
-
-    if (profileError) console.warn('Could not fetch user profile for logging:', profileError);
-
-    const { error } = await supabase
-      .from('audit_logs')
-      .insert({
-        user_id: params.userId,
-        user_name: profile?.full_name || 'Staff User',
-        action: params.action,
-        entity_type: params.entityType,
-        entity_id: params.entityId,
-        details: params.details
-      });
-
-    if (error) console.error('Failed to log activity:', error);
+    const log = new AuditLogModel({
+      _id: crypto.randomUUID(),
+      user_id: params.userId,
+      user_name: profile?.full_name || 'Staff User',
+      action: params.action,
+      entity_type: params.entityType,
+      entity_id: params.entityId,
+      details: params.details
+    });
+    await log.save();
   }
 };

@@ -1,10 +1,11 @@
 'use server';
 
 import { createClient } from '@supabase/supabase-js';
+import connectToDatabase from '@/lib/mongodb';
+import { Profile as ProfileModel } from '@/lib/models';
 import type { UserRole } from '@/lib/constants';
 
 // Create a Supabase client with the Service Role Key
-// This bypasses RLS and allows creating auth users without logging the current user out.
 const getAdminClient = () => {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -22,7 +23,7 @@ export async function createStaffMember(data: {
   fullName: string;
   email: string;
   role: UserRole;
-  password?: string; // Optional password, if not provided we generate one
+  password?: string;
 }) {
   try {
     const supabaseAdmin = getAdminClient();
@@ -50,24 +51,25 @@ export async function createStaffMember(data: {
       return { success: false, error: 'Failed to create user' };
     }
 
-    // 2. Create the profile record
-    const { error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .insert({
-        id: authData.user.id,
+    // 2. Create the profile record in MongoDB
+    try {
+      await connectToDatabase();
+      const newProfile = new ProfileModel({
+        _id: authData.user.id,
         email: data.email,
         full_name: data.fullName,
         role: data.role,
+        status: 'Active'
       });
-
-    if (profileError) {
-      console.error('Error creating profile:', profileError);
+      await newProfile.save();
+    } catch (profileError: any) {
+      console.error('Error creating MongoDB profile:', profileError);
       // Rollback auth user creation if profile fails
       await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
       return { success: false, error: profileError.message };
     }
 
-    return { success: true, password }; // Return generated password so admin can share it
+    return { success: true, password }; 
   } catch (error: any) {
     console.error('Unexpected error creating staff member:', error);
     return { success: false, error: error.message || 'An unexpected error occurred' };
