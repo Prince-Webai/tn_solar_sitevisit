@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { jobService } from '@/lib/supabase/service';
+import { jobService } from '@/lib/api-client';
 import { useAuth } from '@/components/providers/auth-provider';
 import type { Job } from '@/lib/types';
 

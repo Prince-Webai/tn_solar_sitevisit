@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Package, Search, ArrowRight, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { jobService } from '@/lib/supabase/service';
+import { jobService } from '@/lib/api-client';
 import { useAuth } from '@/components/providers/auth-provider';
 import type { Job } from '@/lib/types';
 import type { Profile } from '@/lib/types';

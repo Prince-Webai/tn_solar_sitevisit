@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { HistoryFilters } from '@/components/history/history-filters';
 import { HistoryTable } from '@/components/history/history-table';
 import { AuditLog } from '@/components/history/audit-log';
-import { jobService } from '@/lib/supabase/service';
+import { jobService } from '@/lib/api-client';
 import { useAuth } from '@/components/providers/auth-provider';
 import { Loader2 } from 'lucide-react';
 import type { Job } from '@/lib/types';

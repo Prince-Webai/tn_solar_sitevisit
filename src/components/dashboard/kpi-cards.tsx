@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Calendar, Users, FileCheck, TrendingUp } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { jobService } from '@/lib/supabase/service';
+import { jobService } from '@/lib/api-client';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/providers/auth-provider';
 

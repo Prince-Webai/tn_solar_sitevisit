@@ -1,6 +1,3 @@
-"use server";
-
-import crypto from 'crypto';
 import connectToDatabase from '../mongodb';
 import { SiteVisit as SiteVisitModel, Profile as ProfileModel } from '../models';
 import type { SiteVisitData } from '@/types/site-visit';

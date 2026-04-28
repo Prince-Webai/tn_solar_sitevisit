@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Package, Clock, Wrench, MapPin, Loader2, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { jobService } from '@/lib/supabase/service';
+import { jobService } from '@/lib/api-client';
 import { useAuth } from '@/components/providers/auth-provider';
 import type { Job } from '@/lib/types';
 

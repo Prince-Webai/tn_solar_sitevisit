@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Sidebar } from './sidebar';
-import { jobService } from '@/lib/supabase/service';
+import { jobService } from '@/lib/api-client';
 
 interface SearchResult {
   id: string;

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Search, X, GripVertical, MapPin, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { jobService } from '@/lib/supabase/service';
+import { jobService } from '@/lib/api-client';
 import { useAuth } from '@/components/providers/auth-provider';
 import type { Job } from '@/lib/types';
 
