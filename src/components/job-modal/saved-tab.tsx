@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { Clock, User, Loader2, RefreshCw } from 'lucide-react';
-import { jobService } from '@/lib/api-client';
+import { jobService } from '@/lib/supabase/service';
 import { Button } from '@/components/ui/button';
 
 import { AuditLog } from '@/lib/types';

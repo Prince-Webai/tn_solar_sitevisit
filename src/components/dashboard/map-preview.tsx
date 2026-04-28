@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { MapPin, ExternalLink, Navigation, Loader2, Users } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { jobService } from '@/lib/api-client';
+import { jobService } from '@/lib/supabase/service';
 import type { StaffLocation } from '@/lib/types';
 
 export function MapPreview() {

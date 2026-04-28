@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Clock, User, ArrowRight, FileText, CheckCircle, Send, PlusCircle, Loader2 } from 'lucide-react';
-import { jobService } from '@/lib/api-client';
+import { jobService } from '@/lib/supabase/service';
 import type { AuditLog as AuditLogType } from '@/lib/types';
 
 const actionIcons: Record<string, React.ReactNode> = {

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Search, Clock, MapPin, GripVertical, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { jobService } from '@/lib/api-client';
+import { jobService } from '@/lib/supabase/service';
 import { useAuth } from '@/components/providers/auth-provider';
 import type { Job } from '@/lib/types';
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { GoogleMap, useLoadScript, MarkerF, InfoWindowF } from '@react-google-maps/api';
 import { Plus, MapPin as MapPinIcon, Navigation } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { jobService } from '@/lib/api-client';
+import { jobService } from '@/lib/supabase/service';
 import { useAuth } from '@/components/providers/auth-provider';
 import { DEFAULT_COORDS } from '@/lib/constants';
 import { Badge } from '@/components/ui/badge';

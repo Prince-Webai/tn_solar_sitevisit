@@ -1,5 +1,5 @@
 import useSWR, { useSWRConfig } from 'swr';
-import { jobService } from '@/lib/api-client';
+import { jobService } from '@/lib/supabase/service';
 import { useAuth } from '@/components/providers/auth-provider';
 import type { Job } from '@/lib/types';
 

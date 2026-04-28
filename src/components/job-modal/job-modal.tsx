@@ -8,8 +8,8 @@ import { DetailsTab } from './details-tab';
 import { SavedTab } from './saved-tab';
 import { SiteVisitForm } from '../site-visit/SiteVisitForm';
 import { SiteVisitReport } from '../site-visit/SiteVisitReport';
-import { siteVisitService } from '@/lib/api-client';
-import { jobService } from '@/lib/api-client';
+import { siteVisitService } from '@/lib/supabase/site-visit-service';
+import { jobService } from '@/lib/supabase/service';
 import { useAuth } from '@/components/providers/auth-provider';
 import { toast } from 'sonner';
 

@@ -1,5 +1,4 @@
-import connectToDatabase from '../mongodb';
-import { SiteVisit as SiteVisitModel, Profile as ProfileModel } from '../models';
+import { createClient } from './client';
 import type { SiteVisitData } from '@/types/site-visit';
 
 export const siteVisitService = {
@@ -7,8 +6,17 @@ export const siteVisitService = {
    * Fetch a site visit by its job ID
    */
   async fetchByJobId(jobId: string) {
-    await connectToDatabase();
-    const data = await SiteVisitModel.findOne({ job_id: jobId });
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from('site_visits')
+      .select('*')
+      .eq('job_id', jobId)
+      .maybeSingle();
+
+    if (error) {
+      console.error('Error fetching site visit:', error);
+      throw error;
+    }
 
     if (!data) return null;
 
@@ -32,43 +40,49 @@ export const siteVisitService = {
   },
 
   /**
-   * Upsert a site visit for a specific job
+   * Upsert a site visit for a specific job using atomic RPC
    */
   async upsertSiteVisit(jobId: string, engineerId: string, data: SiteVisitData) {
-    await connectToDatabase();
+    const supabase = createClient();
     
-    const updateData = {
-      engineer_id: engineerId,
-      client_name: data.clientName,
-      client_phone: data.clientPhone,
-      site_address: data.siteAddress,
-      district: data.district,
-      site_gps: data.siteGps,
-      no_of_floors: data.noOfFloors,
-      other_floor_value: data.otherFloorValue,
-      phase: data.phase,
-      photos: data.photos,
-      videos: data.videos,
-      solar_space: data.solarSpace,
-      structure: data.structure,
-      electrical: data.electrical,
-      signature_url: data.signature
-    };
+    // Get user name for audit log
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', engineerId)
+      .single();
 
-    try {
-      const result = await SiteVisitModel.findOneAndUpdate(
-        { job_id: jobId },
-        { 
-          $set: updateData,
-          $setOnInsert: { _id: crypto.randomUUID() } 
-        },
-        { upsert: true, new: true }
-      );
+    const { data: result, error: rpcError } = await supabase
+      .rpc('submit_site_visit_v2', {
+        p_job_id: jobId,
+        p_engineer_id: engineerId,
+        p_client_name: data.clientName,
+        p_client_phone: data.clientPhone,
+        p_site_address: data.siteAddress,
+        p_district: data.district,
+        p_site_gps: data.siteGps,
+        p_no_of_floors: data.noOfFloors,
+        p_other_floor_value: data.otherFloorValue,
+        p_phase: data.phase,
+        p_photos: data.photos,
+        p_videos: data.videos,
+        p_solar_space: data.solarSpace,
+        p_structure: data.structure,
+        p_electrical: data.electrical,
+        p_signature_url: data.signature,
+        p_user_name: profile?.full_name || 'Engineer'
+      });
 
-      return { success: true, data: result };
-    } catch (error: any) {
-      console.error('Error upserting site visit:', error);
-      throw new Error(`Failed to save site visit data: ${error.message}`);
+    if (rpcError) {
+      console.error('Error in submit_site_visit_v2 RPC:', rpcError);
+      throw new Error(`Failed to save site visit data: ${rpcError.message}`);
     }
+
+    if (result && !result.success) {
+      console.error('RPC returned failure:', result.error);
+      throw new Error(`Failed to save site visit data: ${result.error}`);
+    }
+
+    return result;
   }
 };

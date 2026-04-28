@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import connectToDatabase from '@/lib/mongodb';
-import { Profile as ProfileModel } from '@/lib/models';
 
 // Admin-only API route — uses service role key to manage auth users
 const getAdminClient = () =>
@@ -29,26 +27,24 @@ export async function POST(req: NextRequest) {
     const { data: authData, error: authError } = await supabase.auth.admin.createUser({
       email,
       password,
-      email_confirm: true,
+      email_confirm: true, // Skip email confirmation
     });
 
     if (authError) {
       return NextResponse.json({ error: authError.message }, { status: 400 });
     }
 
-    // 2. Upsert profile in MongoDB
-    try {
-      await connectToDatabase();
-      await ProfileModel.findOneAndUpdate(
-        { _id: authData.user.id },
-        {
-          email,
-          full_name: fullName,
-          role,
-        },
-        { upsert: true }
-      );
-    } catch (profileError: any) {
+    // 2. Upsert profile
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .upsert({
+        id: authData.user.id,
+        email,
+        full_name: fullName,
+        role,
+      });
+
+    if (profileError) {
       // Rollback: delete the auth user if profile fails
       await supabase.auth.admin.deleteUser(authData.user.id);
       return NextResponse.json({ error: profileError.message }, { status: 500 });

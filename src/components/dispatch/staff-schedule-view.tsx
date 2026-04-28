@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, X, Loader2, Calendar as CalendarIcon } from 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { jobService } from '@/lib/api-client';
+import { jobService } from '@/lib/supabase/service';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/providers/auth-provider';
 import { toast } from 'sonner';
