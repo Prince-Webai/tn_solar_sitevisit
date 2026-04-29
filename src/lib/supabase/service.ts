@@ -105,7 +105,7 @@ export const jobService = {
     const supabase = createClient();
     const { data, error } = await supabase
       .from('jobs')
-      .update(updates)
+      .update({ ...updates, updated_at: new Date().toISOString() })
       .eq('id', jobId)
       .select();
 
@@ -132,6 +132,7 @@ export const jobService = {
 
     return data[0] as Job;
   },
+
 
   /**
    * Assign a job to a staff member and set the schedule date
