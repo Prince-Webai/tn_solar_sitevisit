@@ -141,7 +141,8 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
           contact_email:       form.email.trim(),
           contact_phone:       form.phone.trim(),
           requires_site_visit: true,
-          materials_status:    'Pending'
+          materials_status:    'Pending',
+          assigned_to:         (profile?.role === 'Engineer' || profile?.role === 'Technician') ? user?.id : undefined
         });
 
         // 4. Fire-and-forget audit log
