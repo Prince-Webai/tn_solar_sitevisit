@@ -95,68 +95,74 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
       setLoading(true);
       console.log('Starting site visit booking process for:', form.firstName, form.lastName);
 
-      const supabase = createClient();
+      // Create a timeout promise to prevent infinite hanging (e.g., Supabase auth queue stall)
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Request timed out. Please check your connection and try again.')), 15000);
+      });
 
-      // 1. Resolve user display name (Profile lookup)
-      // We do this first so we have the name for the audit log
-      let userName = 'Sales Staff';
-      if (user) {
-        console.log('Fetching user profile for logging...');
-        try {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('full_name')
-            .eq('id', user.id)
-            .maybeSingle();
-          if (profile?.full_name) userName = profile.full_name;
-        } catch (profileErr) {
-          console.warn('Non-critical: Failed to fetch profile for logging:', profileErr);
+      const bookingProcess = async () => {
+        const supabase = createClient();
+
+        // 1. Resolve user display name (Profile lookup)
+        let userName = 'Sales Staff';
+        if (user) {
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', user.id)
+              .maybeSingle();
+            if (profile?.full_name) userName = profile.full_name;
+          } catch (profileErr) {
+            console.warn('Non-critical: Failed to fetch profile for logging:', profileErr);
+          }
         }
-      }
 
-      // 2. Create the Client
-      console.log('Creating client record...');
-      const clientEmail = form.email.trim() || `${form.firstName.toLowerCase().replace(/\s+/g, '.')}.${Date.now()}@tnsolar.com`;
-      const client = await jobService.createClient({
-        first_name: form.firstName.trim(),
-        last_name:  form.lastName.trim() || '-',
-        email:      clientEmail,
-        phone:      form.phone.trim(),
-        address:    form.address.trim(),
-        district:   form.district,
-      });
-      console.log('Client created with ID:', client.id);
-
-      // 3. Create the Job
-      console.log('Creating job record...');
-      const job = await jobService.createJob({
-        client_id:           client.id,
-        address:             form.address.trim(),
-        district:            form.district,
-        status:              'Lead' as any,
-        category:            'Site Assessment' as any,
-        description:         form.notes.trim() || 'Site visit booked by sales',
-        contact_name:        `${form.firstName} ${form.lastName}`.trim(),
-        contact_email:       form.email.trim(),
-        contact_phone:       form.phone.trim(),
-        requires_site_visit: true,
-        materials_status:    'Pending'
-      });
-      console.log('Job created successfully:', job.job_number);
-
-      // 4. Fire-and-forget audit log
-      if (user) {
-        supabase.from('audit_logs').insert({
-          user_id:     user.id,
-          user_name:   userName,
-          action:      'job_created',
-          entity_type: 'job',
-          entity_id:   job.id,
-          details:     `Site Visit booked for ${form.firstName} ${form.lastName} by sales team.`
-        }).then(({ error }) => {
-          if (error) console.error('Silent audit log failure:', error);
+        // 2. Create the Client
+        const clientEmail = form.email.trim() || `${form.firstName.toLowerCase().replace(/\\s+/g, '.')}.${Date.now()}@tnsolar.com`;
+        const client = await jobService.createClient({
+          first_name: form.firstName.trim(),
+          last_name:  form.lastName.trim() || '-',
+          email:      clientEmail,
+          phone:      form.phone.trim(),
+          address:    form.address.trim(),
+          district:   form.district,
         });
-      }
+
+        // 3. Create the Job
+        const job = await jobService.createJob({
+          client_id:           client.id,
+          address:             form.address.trim(),
+          district:            form.district,
+          status:              'Lead' as any,
+          category:            'Site Assessment' as any,
+          description:         form.notes.trim() || 'Site visit booked by sales',
+          contact_name:        `${form.firstName} ${form.lastName}`.trim(),
+          contact_email:       form.email.trim(),
+          contact_phone:       form.phone.trim(),
+          requires_site_visit: true,
+          materials_status:    'Pending'
+        });
+
+        // 4. Fire-and-forget audit log
+        if (user) {
+          supabase.from('audit_logs').insert({
+            user_id:     user.id,
+            user_name:   userName,
+            action:      'job_created',
+            entity_type: 'job',
+            entity_id:   job.id,
+            details:     `Site Visit booked for ${form.firstName} ${form.lastName} by sales team.`
+          }).then(({ error }) => {
+            if (error) console.error('Silent audit log failure:', error);
+          });
+        }
+
+        return job;
+      };
+
+      // Race the booking process against the 15s timeout
+      const job = await Promise.race([bookingProcess(), timeoutPromise]) as any;
 
       setJobNumber(job.job_number);
       setDone(true);
@@ -165,9 +171,8 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
       onSuccess?.();
     } catch (err: any) {
       console.error('Booking process failed:', err);
-      // Detailed error for Lokesh to see on his machine
       const errorMsg = err.message || 'Unknown database error';
-      toast.error(`Failed to book site visit: ${errorMsg}. Please check your connection or contact support.`);
+      toast.error(`Failed to book site visit: ${errorMsg}. Please refresh the page if this persists.`);
     } finally {
       setLoading(false);
       isSubmitting.current = false;
