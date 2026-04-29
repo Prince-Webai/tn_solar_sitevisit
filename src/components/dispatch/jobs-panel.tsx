@@ -20,17 +20,23 @@ function JobCard({ job, onDoubleClick }: { job: Job; onDoubleClick: () => void }
     'Lead': 'bg-secondary',
     'Work Order': 'bg-blue-500',
     'In Progress': 'bg-primary',
+    'Site Visit': 'bg-teal-500',
     'Completed': 'bg-primary',
+    'Cancelled': 'bg-red-400',
+    'Unsuccessful': 'bg-slate-400',
   };
   const dotColor = statusColors[job.status] || 'bg-mid-gray';
 
   const statusLetters: Record<string, { letter: string; bg: string; text: string }> = {
     'Quote': { letter: 'Q', bg: 'bg-secondary', text: 'text-white' },
     'Quote Sent': { letter: 'Q', bg: 'bg-secondary', text: 'text-white' },
-    'Lead': { letter: 'Q', bg: 'bg-secondary', text: 'text-white' },
+    'Lead': { letter: 'L', bg: 'bg-secondary', text: 'text-white' },
     'Work Order': { letter: 'W', bg: 'bg-blue-500', text: 'text-white' },
     'In Progress': { letter: 'W', bg: 'bg-blue-500', text: 'text-white' },
+    'Site Visit': { letter: 'S', bg: 'bg-teal-500', text: 'text-white' },
     'Completed': { letter: 'C', bg: 'bg-primary', text: 'text-white' },
+    'Cancelled': { letter: 'X', bg: 'bg-red-400', text: 'text-white' },
+    'Unsuccessful': { letter: 'U', bg: 'bg-slate-400', text: 'text-white' },
   };
   const badge = statusLetters[job.status] || { letter: '?', bg: 'bg-mid-gray', text: 'text-white' };
 
