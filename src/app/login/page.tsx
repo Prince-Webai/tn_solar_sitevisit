@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Eye, EyeOff, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -10,7 +9,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { createClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -49,8 +47,10 @@ export default function LoginPage() {
       const params = new URLSearchParams(window.location.search);
       const redirectTo = params.get('redirect') || '/dashboard';
 
-      // Use a hard redirect to ensure the session is picked up by middleware correctly on production
-      router.push(redirectTo);
+      // Use a hard redirect (full page load) so the browser sends a fresh request
+      // with the new Supabase session cookie, allowing middleware to detect the session.
+      // router.push() is a soft nav and the middleware won't see the cookie in time.
+      window.location.href = redirectTo;
     } catch {
       setError('Something went wrong. Please try again.');
     } finally {

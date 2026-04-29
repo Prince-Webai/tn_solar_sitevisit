@@ -227,7 +227,7 @@ export function SiteVisitForm({ jobId, onSuccess }: { jobId?: string, onSuccess?
       </div>
 
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(onSubmit)} className="flex-1 p-6 overflow-y-auto">
+        <form id="site-visit-form" onSubmit={handleSubmit(onSubmit)} className="flex-1 p-6 overflow-y-auto">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentStep}
@@ -503,6 +503,7 @@ export function SiteVisitForm({ jobId, onSuccess }: { jobId?: string, onSuccess?
         ) : (
           <Button
             type="submit"
+            form="site-visit-form"
             disabled={isSubmitting}
             className="h-12 px-8 bg-secondary hover:bg-orange-light font-bold text-white shadow-lg shadow-secondary/20"
           >

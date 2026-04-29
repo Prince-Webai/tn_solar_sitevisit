@@ -166,12 +166,11 @@ export function StaffScheduleView({ onJobClick, refreshKey, onScheduleUpdate }: 
     }
 
     try {
-      const assignedJob = await jobService.assignJob(jobId, staffId, scheduledDate.toISOString());
+      await jobService.assignJob(jobId, staffId, scheduledDate.toISOString());
       
       // Log activity
       if (user) {
-        // Find staff name
-        const staff = staffMembers.find(s => s.id === staffId);
+        const staff = staffMembers.find((s: any) => s.id === staffId);
         await jobService.logActivity({
           userId: user.id,
           action: 'assigned',
@@ -184,11 +183,12 @@ export function StaffScheduleView({ onJobClick, refreshKey, onScheduleUpdate }: 
       setJobs(await jobService.fetchJobs());
       toast.success(`Assigned at ${col.label}`);
       onScheduleUpdate?.();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Assign error:', err);
-      toast.error('Failed to assign job.');
+      toast.error(err?.message || 'Failed to assign job.');
     }
-  }, [clientXToSlot, columns, onScheduleUpdate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clientXToSlot, columns, onScheduleUpdate, user, staffMembers]);
 
   const getSlotIndex = useCallback((job: Job) => {
     if (!job.scheduled_date) return -1;
