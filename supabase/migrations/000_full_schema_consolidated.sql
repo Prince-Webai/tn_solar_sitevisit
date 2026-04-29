@@ -504,13 +504,13 @@ BEGIN
     SET
       latitude   = (p_site_gps->>'lat')::NUMERIC,
       longitude  = (p_site_gps->>'lng')::NUMERIC,
-      status     = 'In Progress',
+      status     = 'Site Visit',
       updated_at = now()
     WHERE id = p_job_id;
   ELSE
     UPDATE public.jobs
     SET
-      status     = 'In Progress',
+      status     = 'Site Visit',
       updated_at = now()
     WHERE id = p_job_id;
   END IF;
