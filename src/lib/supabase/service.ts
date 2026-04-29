@@ -107,12 +107,16 @@ export const jobService = {
       .from('jobs')
       .update(updates)
       .eq('id', jobId)
-      .select()
-      .single();
+      .select();
 
     if (error) {
       console.error('Error updating job:', error);
-      throw error;
+      throw new Error(error.message || 'Database error while updating job.');
+    }
+
+    // If data is empty, the update was silently blocked by RLS
+    if (!data || data.length === 0) {
+      throw new Error('Permission denied: you do not have access to update this job.');
     }
 
     // Auto-log activity
@@ -126,7 +130,7 @@ export const jobService = {
       }).catch(err => console.error('Silent logging failure:', err));
     }
 
-    return data as Job;
+    return data[0] as Job;
   },
 
   /**

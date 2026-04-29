@@ -152,7 +152,7 @@ export function StaffScheduleView({ onJobClick, refreshKey, onScheduleUpdate }: 
 
     const jobId = e.dataTransfer.getData('text/plain');
     if (!jobId) {
-      toast.error('Could not read job. Try again.');
+      toast.error('Could not read job data. Please try again.');
       return;
     }
 
@@ -165,30 +165,32 @@ export function StaffScheduleView({ onJobClick, refreshKey, onScheduleUpdate }: 
       scheduledDate.setHours(9, 0, 0, 0);
     }
 
+    const toastId = toast.loading('Assigning job...');
     try {
       await jobService.assignJob(jobId, staffId, scheduledDate.toISOString());
-      
-      // Log activity
+
+      // Fire-and-forget activity log — don't block success on this
       if (user) {
         const staff = staffMembers.find((s: any) => s.id === staffId);
-        await jobService.logActivity({
+        jobService.logActivity({
           userId: user.id,
           action: 'assigned',
           entityType: 'job',
           entityId: jobId,
           details: `Allocated to ${staff?.full_name || 'Staff member'} for ${col.label}`
-        });
+        }).catch(() => {});
       }
 
       setJobs(await jobService.fetchJobs());
-      toast.success(`Assigned at ${col.label}`);
+      toast.success(`Job assigned for ${col.label}`, { id: toastId });
       onScheduleUpdate?.();
     } catch (err: any) {
       console.error('Assign error:', err);
-      toast.error(err?.message || 'Failed to assign job.');
+      toast.error(err?.message || 'Failed to assign job.', { id: toastId });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientXToSlot, columns, onScheduleUpdate, user, staffMembers]);
+
 
   const getSlotIndex = useCallback((job: Job) => {
     if (!job.scheduled_date) return -1;
