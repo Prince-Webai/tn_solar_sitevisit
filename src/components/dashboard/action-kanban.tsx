@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Package, Search, ArrowRight, Loader2 } from 'lucide-react';
+import { Package, Search, ArrowRight, Loader2, Calendar } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { jobService } from '@/lib/supabase/service';
@@ -69,15 +69,43 @@ export function ActionKanban({ onJobClick }: ActionKanbanProps) {
     );
   }
 
-  // Parts to order: materials_status = 'Pending'
+  const isEngineer = profile?.role === 'Engineer' || profile?.role === 'Technician';
+
+  // For Admins/Sales: Parts to order: materials_status = 'Pending'
   const partsToOrder = jobs.filter(j => j.materials_status === 'Pending');
 
-  // Pending site assessments: status = 'Lead' and requires_site_visit = true
+  // For Admins/Sales: Pending site assessments: status = 'Lead' and requires_site_visit = true
   const pendingAssessments = jobs.filter(j => 
     j.status === 'Lead' && j.requires_site_visit
   );
 
-  const columns = [
+  // For Engineers: Today's Jobs
+  const today = new Date().toISOString().split('T')[0];
+  const todaysJobs = jobs.filter(j => j.scheduled_date?.startsWith(today));
+
+  // For Engineers: Upcoming Jobs (scheduled for future, or unscheduled)
+  const upcomingJobs = jobs.filter(j => !j.scheduled_date?.startsWith(today) && j.status !== 'Completed' && j.status !== 'Cancelled' && j.status !== 'Unsuccessful');
+
+  const columns = isEngineer ? [
+    {
+      title: 'Today\'s Jobs',
+      icon: Calendar,
+      iconColor: 'text-blue-600',
+      iconBg: 'bg-blue-50',
+      items: todaysJobs,
+      badgeText: 'Today',
+      badgeColor: 'bg-blue-100 text-blue-700',
+    },
+    {
+      title: 'Upcoming Tasks',
+      icon: Search,
+      iconColor: 'text-secondary',
+      iconBg: 'bg-orange-50',
+      items: upcomingJobs,
+      badgeText: 'Upcoming',
+      badgeColor: 'bg-secondary/15 text-secondary-dark',
+    },
+  ] : [
     {
       title: 'Parts to Order',
       icon: Package,
