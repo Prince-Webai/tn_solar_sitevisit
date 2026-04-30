@@ -56,7 +56,7 @@ const EMPTY_FORM: FormData = {
 };
 
 export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteVisitDialogProps) {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
