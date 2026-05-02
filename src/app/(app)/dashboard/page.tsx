@@ -11,6 +11,8 @@ import { MapPreview } from '@/components/dashboard/map-preview';
 import { JobModal } from '@/components/job-modal/job-modal';
 import { BookSiteVisitDialog } from '@/components/job-modal/book-site-visit-dialog';
 import { useJobs } from '@/hooks/use-jobs';
+import { SafeMount } from '@/components/ui/safe-mount';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 
 export default function DashboardPage() {
   const { profile, loading: authLoading } = useAuth();
@@ -64,21 +66,37 @@ export default function DashboardPage() {
         {/* Top Row: Weather + KPIs */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           <div className="lg:col-span-1">
-            <WeatherWidget />
+            <ErrorBoundary>
+              <SafeMount fallback={<div className="h-32 bg-off-white animate-pulse rounded-2xl" />}>
+                <WeatherWidget />
+              </SafeMount>
+            </ErrorBoundary>
           </div>
           <div className="lg:col-span-3">
-            <KpiCards />
+            <ErrorBoundary>
+              <SafeMount fallback={<div className="h-32 bg-off-white animate-pulse rounded-2xl" />}>
+                <KpiCards />
+              </SafeMount>
+            </ErrorBoundary>
           </div>
         </div>
 
         {/* Bottom Row: Kanban + Map */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2">
-            <ActionKanban onJobClick={handleJobClick} />
+            <ErrorBoundary>
+              <SafeMount fallback={<div className="h-64 bg-off-white animate-pulse rounded-2xl" />}>
+                <ActionKanban onJobClick={handleJobClick} />
+              </SafeMount>
+            </ErrorBoundary>
           </div>
           <div className="lg:col-span-1">
             <div className="h-[300px] lg:h-full min-h-[400px]">
-              <MapPreview />
+              <ErrorBoundary>
+                <SafeMount fallback={<div className="h-full bg-off-white animate-pulse rounded-2xl" />}>
+                  <MapPreview />
+                </SafeMount>
+              </ErrorBoundary>
             </div>
           </div>
         </div>
