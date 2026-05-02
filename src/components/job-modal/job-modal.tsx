@@ -32,7 +32,12 @@ export function JobModal({ open, onOpenChange, jobId, onSuccess }: JobModalProps
   const { user, profile } = useAuth();
   const [activeTab, setActiveTab] = useState<TabId>('details');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const isEditing = !!jobId;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const handleDelete = async () => {
     if (!jobId || !user) return;
@@ -66,6 +71,8 @@ export function JobModal({ open, onOpenChange, jobId, onSuccess }: JobModalProps
       setIsDeleting(false);
     }
   };
+
+  if (!mounted) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -42,7 +42,10 @@ export function TasksView({ onJobClick, refreshKey }: TasksViewProps) {
             {jobsWithTasks.map(job => (
               <div
                 key={job.id}
-                onClick={() => onJobClick(job.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onJobClick(job.id);
+                }}
                 className="group cursor-pointer border-b border-light-gray hover:bg-off-white/40 transition-colors"
               >
                 {/* Desktop Grid Layout */}

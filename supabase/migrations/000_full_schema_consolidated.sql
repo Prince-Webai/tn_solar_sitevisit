@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS public.jobs (
   longitude            NUMERIC(10,7),
   status               TEXT NOT NULL DEFAULT 'Quote'
                          CHECK (status IN ('Lead','Quote','Quote Sent','Work Order',
-                                           'In Progress','Completed','Cancelled',
+                                           'In Progress','Site Visit','Completed','Cancelled',
                                            'Unsuccessful','Archived')),
   category             TEXT CHECK (category IN ('Installation','Service','Site Assessment')),
   description          TEXT,

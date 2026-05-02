@@ -47,7 +47,10 @@ function JobCard({ job, onDoubleClick }: { job: Job; onDoubleClick: () => void }
         e.dataTransfer.setData('text/plain', job.id);
         e.dataTransfer.effectAllowed = 'move';
       }}
-      onClick={onDoubleClick} // Enable single tap for mobile
+      onClick={(e) => {
+        e.stopPropagation();
+        onDoubleClick();
+      }} // Enable single tap for mobile
       className="px-3 py-3 border-b border-light-gray hover:bg-off-white transition-colors cursor-grab active:cursor-grabbing group active:bg-off-white"
     >
       <div className="flex items-start gap-3">

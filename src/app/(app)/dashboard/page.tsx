@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Plus, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { WeatherWidget } from '@/components/dashboard/weather-widget';
@@ -30,10 +30,10 @@ export default function DashboardPage() {
 
   const isAdminOrSales = ['Admin', 'Sales', 'Dispatcher'].includes(profile?.role || '');
 
-  const handleJobClick = (jobId: string) => {
+  const handleJobClick = useCallback((jobId: string) => {
     setSelectedJobId(jobId);
     setJobModalOpen(true);
-  };
+  }, []);
 
   return (
     <>

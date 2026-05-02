@@ -19,7 +19,10 @@ interface KanbanCardProps {
 function KanbanCard({ jobNumber, clientName, address, badge, badgeColor = 'bg-gray-100 text-dark-gray', onClick }: KanbanCardProps) {
   return (
     <button
-      onClick={onClick}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick?.();
+      }}
       className="w-full text-left p-3 bg-white rounded-lg border border-light-gray hover:border-primary/50 hover:shadow-sm transition-all duration-200 group"
     >
       <div className="flex items-center justify-between mb-1.5">

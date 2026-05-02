@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Plus, Package, Clock, Wrench,
   Map, ListChecks, CalendarDays, Users, Layers, Loader2
@@ -79,10 +79,10 @@ export default function DispatchPage() {
     if (!authLoading) loadStaff();
   }, [user, profile, authLoading, isEngineer, supabase]);
 
-  const handleJobDoubleClick = (jobId: string) => {
+  const handleJobDoubleClick = useCallback((jobId: string) => {
     setSelectedJobId(jobId);
     setJobModalOpen(true);
-  };
+  }, []);
 
   if (authLoading) {
     return (

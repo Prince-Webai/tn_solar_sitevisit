@@ -360,7 +360,10 @@ export function StaffScheduleView({ onJobClick, refreshKey, onScheduleUpdate }: 
                         className={`absolute top-1.5 h-[52px] overflow-hidden rounded-lg cursor-pointer group/block z-20 shadow-sm border transition-all hover:scale-[1.02] active:scale-95
                           ${isQuote ? 'bg-secondary/10 border-secondary/30' : 'bg-blue-50 border-blue-200'}`}
                         style={{ left: si * COL_WIDTH + 4, width: dur * COL_WIDTH - 8 }}
-                        onClick={() => onJobClick(job.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onJobClick(job.id);
+                        }}
                       >
                         <div className="px-2.5 h-full flex flex-col justify-center overflow-hidden">
                           <p className={`text-[10px] font-black truncate uppercase tracking-tight ${isQuote ? 'text-secondary-dark' : 'text-blue-700'}`}>

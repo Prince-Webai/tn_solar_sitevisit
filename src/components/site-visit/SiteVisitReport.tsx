@@ -97,7 +97,7 @@ export function SiteVisitReport({ data, date }: SiteVisitReportProps) {
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-            {Object.entries(data.photos).map(([key, url]) => (
+            {Object.entries(data.photos || {}).map(([key, url]) => (
               url && (
                 <div key={key} className="space-y-1.5">
                   <div className="aspect-square relative rounded-lg border border-light-gray bg-off-white overflow-hidden shadow-inner group">
@@ -132,22 +132,22 @@ export function SiteVisitReport({ data, date }: SiteVisitReportProps) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <p className="text-[10px] uppercase font-bold text-mid-gray tracking-wider">Area Length</p>
-                <p className="text-lg font-bold text-charcoal">{data.solarSpace.length}m</p>
+                <p className="text-lg font-bold text-charcoal">{data.solarSpace?.length}m</p>
               </div>
               <div>
                 <p className="text-[10px] uppercase font-bold text-mid-gray tracking-wider">Area Width</p>
-                <p className="text-lg font-bold text-charcoal">{data.solarSpace.width}m</p>
+                <p className="text-lg font-bold text-charcoal">{data.solarSpace?.width}m</p>
               </div>
             </div>
             <div className="flex items-center justify-between p-3 bg-off-white rounded-lg border border-light-gray">
               <span className="text-sm font-medium">Orientation</span>
-              <Badge className={data.solarSpace.southFacing ? 'bg-primary text-white' : 'bg-mid-gray text-white'}>
-                {data.solarSpace.southFacing ? 'South Facing' : 'Non-South'}
+              <Badge className={data.solarSpace?.southFacing ? 'bg-primary text-white' : 'bg-mid-gray text-white'}>
+                {data.solarSpace?.southFacing ? 'South Facing' : 'Non-South'}
               </Badge>
             </div>
             <div>
               <p className="text-[10px] uppercase font-bold text-mid-gray tracking-wider">Area Shape</p>
-              <p className="text-sm font-semibold text-charcoal">{data.solarSpace.shape || 'Standard'}</p>
+              <p className="text-sm font-semibold text-charcoal">{data.solarSpace?.shape || 'Standard'}</p>
             </div>
           </CardContent>
         </Card>
@@ -162,17 +162,17 @@ export function SiteVisitReport({ data, date }: SiteVisitReportProps) {
           <CardContent className="p-6 space-y-4">
             <div>
               <p className="text-[10px] uppercase font-bold text-mid-gray tracking-wider">Mount Type</p>
-              <p className="text-sm font-bold text-primary">{data.structure.size}</p>
+              <p className="text-sm font-bold text-primary">{data.structure?.size}</p>
             </div>
             <div className="space-y-2">
               <p className="text-[10px] uppercase font-bold text-mid-gray tracking-wider">Inverter Location</p>
-              <p className="text-sm font-medium text-charcoal">{data.electrical.inverterLocation}</p>
+              <p className="text-sm font-medium text-charcoal">{data.electrical?.inverterLocation}</p>
             </div>
-            {data.structure.lightningArrestor && (
+            {data.structure?.lightningArrestor && (
               <div className="p-3 bg-blue-50/50 rounded-lg border border-blue-100">
                 <p className="text-[10px] uppercase font-bold text-blue-600 tracking-wider">Lightning Arrestor</p>
                 <p className="text-xs font-medium text-blue-700 mt-1">
-                  Location: {data.structure.lightArrestorLocation} · {data.structure.pipeLength}m pipe
+                  Location: {data.structure?.lightArrestorLocation} · {data.structure?.pipeLength}m pipe
                 </p>
               </div>
             )}
@@ -190,7 +190,7 @@ export function SiteVisitReport({ data, date }: SiteVisitReportProps) {
         </CardHeader>
         <CardContent className="p-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {Object.entries(data.videos).map(([key, url]) => (
+            {Object.entries(data.videos || {}).map(([key, url]) => (
               url && (
                 <div key={key} className="space-y-2">
                   <div className="aspect-video relative rounded-lg border border-light-gray bg-black overflow-hidden shadow-md">

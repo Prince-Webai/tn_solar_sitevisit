@@ -21,6 +21,7 @@ export const siteVisitService = {
     if (!data) return null;
 
     // Map database snake_case to frontend camelCase
+    // Use fallbacks for JSONB fields — they can be null in older/partial records
     return {
       clientName: data.client_name,
       clientPhone: data.client_phone,
@@ -30,11 +31,11 @@ export const siteVisitService = {
       noOfFloors: data.no_of_floors,
       otherFloorValue: data.other_floor_value,
       phase: data.phase,
-      photos: data.photos,
-      videos: data.videos,
-      solarSpace: data.solar_space,
-      structure: data.structure,
-      electrical: data.electrical,
+      photos: data.photos || {},
+      videos: data.videos || {},
+      solarSpace: data.solar_space || { length: '', width: '', southFacing: false, shape: 'Rectangle' },
+      structure: data.structure || { lightningArrestor: false, additionalPipe: false, size: 'LOW RAISE' },
+      electrical: data.electrical || { inverterLocation: 'Same floor' },
       signature: data.signature_url,
     } as SiteVisitData;
   },

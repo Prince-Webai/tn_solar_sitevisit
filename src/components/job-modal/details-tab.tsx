@@ -52,8 +52,14 @@ export function DetailsTab({ jobId, onSuccess }: DetailsTabProps) {
     async function loadData() {
       try {
         setLoading(true);
-        const clientsData = await jobService.fetchClients();
-        setClients(clientsData);
+
+        // Fetch clients (non-fatal — some roles may not have access)
+        try {
+          const clientsData = await jobService.fetchClients();
+          setClients(clientsData);
+        } catch (clientErr) {
+          console.warn('Could not fetch clients (may be RLS restricted):', clientErr);
+        }
 
         if (jobId) {
           const jobData = await jobService.fetchJobById(jobId);
@@ -73,19 +79,23 @@ export function DetailsTab({ jobId, onSuccess }: DetailsTabProps) {
             setContactPhone(jobData.contact_phone || '');
             setBillingSameAsJob(jobData.billing_same_as_job !== false);
 
-            // Fetch checklist
-            const checklistData = await jobService.fetchChecklist(jobId);
-            if (checklistData && checklistData.length > 0) {
-              setChecklist(checklistData.map((item: any) => ({
-                id: item.id,
-                text: item.text,
-                completed: item.completed
-              })));
+            // Fetch checklist (non-fatal)
+            try {
+              const checklistData = await jobService.fetchChecklist(jobId);
+              if (checklistData && checklistData.length > 0) {
+                setChecklist(checklistData.map((item: any) => ({
+                  id: item.id,
+                  text: item.text,
+                  completed: item.completed
+                })));
+              }
+            } catch (checklistErr) {
+              console.warn('Could not fetch checklist:', checklistErr);
             }
           }
         }
       } catch (error) {
-        console.error('Failed to load data:', error);
+        console.error('Failed to load job data:', error);
       } finally {
         setLoading(false);
       }
