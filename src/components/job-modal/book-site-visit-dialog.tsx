@@ -19,6 +19,8 @@ import {
   Loader2,
   ChevronRight,
   MapPinned,
+  CalendarDays,
+  AlertCircle,
 } from 'lucide-react';
 import {
   Select,
@@ -27,7 +29,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { TN_DISTRICTS } from '@/lib/constants';
+
+const MAX_JOBS_PER_DAY = 6;
+
+function toLocalDateString(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
 
 interface BookSiteVisitDialogProps {
   open: boolean;
@@ -61,7 +71,27 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [jobNumber, setJobNumber] = useState('');
+  const [scheduledDate, setScheduledDate] = useState<Date | undefined>();
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [slotCount, setSlotCount] = useState<number>(0);
+  const [checkingSlots, setCheckingSlots] = useState(false);
   const isSubmitting = useRef(false);
+
+  const handleDateSelect = async (date: Date | undefined) => {
+    setScheduledDate(date);
+    setCalendarOpen(false);
+    if (!date) { setSlotCount(0); return; }
+    setCheckingSlots(true);
+    try {
+      const count = await jobService.countJobsForDate(toLocalDateString(date));
+      setSlotCount(count);
+    } finally {
+      setCheckingSlots(false);
+    }
+  };
+
+  const slotsLeft = MAX_JOBS_PER_DAY - slotCount;
+  const dayFull = scheduledDate !== undefined && slotsLeft <= 0;
 
   const set = (field: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | string) => {
     if (typeof e === 'string') {
@@ -76,6 +106,8 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
       setForm(EMPTY_FORM);
       setDone(false);
       setJobNumber('');
+      setScheduledDate(undefined);
+      setSlotCount(0);
     }
     onOpenChange(v);
   };
@@ -89,6 +121,8 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
     if (!form.firstName.trim()) { toast.error('Customer first name is required'); return; }
     if (!form.phone.trim())     { toast.error('Phone number is required'); return; }
     if (!form.address.trim())   { toast.error('Site address is required'); return; }
+    if (!scheduledDate)         { toast.error('Please select a scheduled date'); return; }
+    if (dayFull)                { toast.error(`${scheduledDate.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} is fully booked (${MAX_JOBS_PER_DAY}/${MAX_JOBS_PER_DAY} slots used)`); return; }
 
     try {
       isSubmitting.current = true;
@@ -142,6 +176,7 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
           contact_phone:       form.phone.trim(),
           requires_site_visit: true,
           materials_status:    'Pending',
+          scheduled_date:      scheduledDate ? toLocalDateString(scheduledDate) : undefined,
           assigned_to:         (profile?.role === 'Engineer' || profile?.role === 'Technician') ? user?.id : undefined
         });
 
@@ -327,6 +362,60 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
                 </Select>
               </div>
 
+              {/* Scheduled Date */}
+              <div className="space-y-1.5">
+                <label className="text-sm font-semibold text-charcoal flex items-center gap-1.5">
+                  <CalendarDays className="w-3.5 h-3.5 text-primary" />
+                  Scheduled Date <span className="text-red-500">*</span>
+                </label>
+                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                  <PopoverTrigger
+                    className={`w-full h-10 flex items-center justify-between px-3 rounded-lg border text-sm transition-colors
+                      ${scheduledDate ? 'text-charcoal' : 'text-mid-gray'}
+                      ${dayFull ? 'border-red-400 bg-red-50' : 'border-light-gray bg-off-white hover:border-primary/50'}`}
+                  >
+                    <span>
+                      {scheduledDate
+                        ? scheduledDate.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
+                        : 'Select a date'}
+                    </span>
+                    <CalendarDays className="w-4 h-4 text-mid-gray shrink-0" />
+                  </PopoverTrigger>
+                  <PopoverContent side="bottom" align="start" className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={scheduledDate}
+                      onSelect={handleDateSelect}
+                      disabled={{ before: new Date() }}
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                {/* Slot indicator */}
+                {scheduledDate && (
+                  <div className={`flex items-center gap-2 text-xs font-medium px-3 py-2 rounded-lg
+                    ${dayFull ? 'bg-red-50 text-red-600 border border-red-200'
+                    : slotsLeft <= 2 ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                    : 'bg-green-50 text-green-700 border border-green-200'}`}
+                  >
+                    {checkingSlots ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : dayFull ? (
+                      <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    ) : (
+                      <span className="w-3.5 h-3.5 shrink-0 flex items-center justify-center font-black text-[10px]">
+                        {slotsLeft}
+                      </span>
+                    )}
+                    {checkingSlots
+                      ? 'Checking availability…'
+                      : dayFull
+                      ? `Fully booked — all ${MAX_JOBS_PER_DAY} slots used`
+                      : `${slotsLeft} of ${MAX_JOBS_PER_DAY} slots available`}
+                  </div>
+                )}
+              </div>
+
               {/* Notes */}
               <div className="space-y-1.5">
                 <label className="text-sm font-semibold text-charcoal">
@@ -355,7 +444,7 @@ export function BookSiteVisitDialog({ open, onOpenChange, onSuccess }: BookSiteV
               <Button
                 id="sv-submit"
                 onClick={handleSubmit}
-                disabled={loading}
+                disabled={loading || dayFull || checkingSlots}
                 className="flex-1 bg-primary hover:bg-primary-dark text-white font-semibold shadow-md shadow-primary/20 gap-2"
               >
                 {loading ? (

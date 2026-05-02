@@ -135,6 +135,28 @@ export const jobService = {
 
 
   /**
+   * Count how many jobs are scheduled on a given date (YYYY-MM-DD).
+   * Used to enforce the 6-job-per-day allocation limit.
+   */
+  async countJobsForDate(date: string): Promise<number> {
+    const supabase = createClient();
+    try {
+      const { count, error } = await supabase
+        .from('jobs')
+        .select('*', { count: 'exact', head: true })
+        .eq('scheduled_date', date)
+        .not('status', 'in', '("Cancelled","Unsuccessful")');
+      if (error) {
+        console.error('Error counting jobs for date:', error);
+        return 0;
+      }
+      return count ?? 0;
+    } catch {
+      return 0;
+    }
+  },
+
+  /**
    * Assign a job to a staff member and set the schedule date
    */
   async assignJob(jobId: string, staffId: string, scheduledDate: string, userId?: string) {
