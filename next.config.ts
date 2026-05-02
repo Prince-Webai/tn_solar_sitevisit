@@ -1,11 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Required for @netlify/plugin-nextjs to package the Node.js proxy function.
-  // In Next.js 16 the NEXT_PRIVATE_STANDALONE env var no longer triggers
-  // standalone mode — only this config key does.
-  output: 'standalone',
-
   // Enable gzip/brotli compression
   compress: true,
 
