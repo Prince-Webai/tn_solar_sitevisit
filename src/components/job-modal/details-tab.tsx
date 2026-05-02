@@ -31,7 +31,7 @@ export function DetailsTab({ jobId, onSuccess }: DetailsTabProps) {
   const [clientSearch, setClientSearch] = useState('');
   const [showClientDropdown, setShowClientDropdown] = useState(false);
   const [selectedClient, setSelectedClient] = useState<string | null>(null);
-  const [status, setStatus] = useState('Quote');
+  const [status, setStatus] = useState('Lead');
   const [category, setCategory] = useState('Installation');
   const [poNumber, setPoNumber] = useState('');
   const [address, setAddress] = useState('');
@@ -70,7 +70,7 @@ export function DetailsTab({ jobId, onSuccess }: DetailsTabProps) {
             }
             setAddress(jobData.address || '');
             setDistrict(jobData.district || 'Chennai');
-            setStatus(jobData.status || 'Quote');
+            setStatus(jobData.status || 'Lead');
             setCategory(jobData.category || 'Installation');
             setPoNumber(jobData.po_number || '');
             setDescription(jobData.description || '');
@@ -107,9 +107,9 @@ export function DetailsTab({ jobId, onSuccess }: DetailsTabProps) {
     if (!clientSearch) return true;
     const q = clientSearch.toLowerCase();
     return (
-      c.first_name.toLowerCase().includes(q) ||
-      c.last_name.toLowerCase().includes(q) ||
-      c.email.toLowerCase().includes(q)
+      (c.first_name ?? '').toLowerCase().includes(q) ||
+      (c.last_name ?? '').toLowerCase().includes(q) ||
+      (c.email ?? '').toLowerCase().includes(q)
     );
   });
 
