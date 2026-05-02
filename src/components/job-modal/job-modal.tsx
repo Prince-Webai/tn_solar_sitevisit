@@ -12,6 +12,8 @@ import { siteVisitService } from '@/lib/supabase/site-visit-service';
 import { jobService } from '@/lib/supabase/service';
 import { useAuth } from '@/components/providers/auth-provider';
 import { toast } from 'sonner';
+import { SafeMount } from '@/components/ui/safe-mount';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 
 const TABS = [
   { id: 'details', label: 'Details' },
@@ -142,16 +144,20 @@ export function JobModal({ open, onOpenChange, jobId, onSuccess }: JobModalProps
         </div>
 
         <div className="flex-1 overflow-y-auto">
-          {activeTab === 'details' && (
-            <DetailsTab jobId={jobId} onSuccess={() => {
-              onSuccess?.();
-              onOpenChange(false);
-            }} />
-          )}
-          {activeTab === 'site-visit' && jobId && (
-            <SiteVisitTab jobId={jobId} onSuccess={onSuccess} />
-          )}
-          {activeTab === 'activity' && <SavedTab jobId={jobId} />}
+          <ErrorBoundary>
+            <SafeMount fallback={<div className="p-10 text-center"><Loader2 className="w-6 h-6 text-primary animate-spin mx-auto" /></div>}>
+              {activeTab === 'details' && (
+                <DetailsTab jobId={jobId} onSuccess={() => {
+                  onSuccess?.();
+                  onOpenChange(false);
+                }} />
+              )}
+              {activeTab === 'site-visit' && jobId && (
+                <SiteVisitTab jobId={jobId} onSuccess={onSuccess} />
+              )}
+              {activeTab === 'activity' && <SavedTab jobId={jobId} />}
+            </SafeMount>
+          </ErrorBoundary>
         </div>
       </DialogContent>
     </Dialog>

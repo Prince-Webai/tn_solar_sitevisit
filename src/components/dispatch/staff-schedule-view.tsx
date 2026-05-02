@@ -108,7 +108,7 @@ export function StaffScheduleView({ onJobClick, refreshKey, onScheduleUpdate }: 
       }
     }
     if (!authLoading) loadData();
-  }, [refreshKey, user, profile, authLoading]);
+  }, [refreshKey, user?.id, profile?.role, authLoading]);
 
   const dateLabelShort = selectedDate.toLocaleDateString('en-IN', {
     day: 'numeric', month: 'short'
@@ -310,7 +310,7 @@ export function StaffScheduleView({ onJobClick, refreshKey, onScheduleUpdate }: 
                 <div style={{ width: STAFF_COL_W }} className="shrink-0 px-2 py-3 border-r border-light-gray bg-white sticky left-0 z-20 shadow-[2px_0_8px_rgba(0,0,0,0.02)] flex flex-col items-center justify-center gap-1 group-hover/row:bg-off-white/30 transition-colors">
                   <Avatar className="w-8 h-8 shrink-0 ring-2 ring-off-white">
                     <AvatarFallback className="bg-primary text-white text-[10px] font-black uppercase">
-                      {staff.full_name.split(' ').map((n: string) => n[0]).join('')}
+                      {(staff.full_name || 'Staff').split(' ').map((n: string) => n[0]).join('')}
                     </AvatarFallback>
                   </Avatar>
                   <span className="text-[9px] font-bold text-charcoal w-full text-center px-1 leading-tight line-clamp-2">

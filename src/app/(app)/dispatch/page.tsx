@@ -19,6 +19,8 @@ import { StaffScheduleView } from '@/components/dispatch/staff-schedule-view';
 import { QueuesView } from '@/components/dispatch/queues-view';
 import { createClient } from '@/lib/supabase/client';
 import { useAuth } from '@/components/providers/auth-provider';
+import { SafeMount } from '@/components/ui/safe-mount';
+import { ErrorBoundary } from '@/components/ui/error-boundary';
 
 const TABS = [
   { id: 'map',       label: 'Map',            icon: Map },
@@ -139,7 +141,7 @@ export default function DispatchPage() {
                 {staffMembers.slice(0, 3).map(s => (
                   <Avatar key={s.id} className="w-7 h-7 md:w-8 md:h-8 border-2 border-white shadow-sm ring-1 ring-light-gray/50">
                     <AvatarFallback className="bg-primary/10 text-primary text-[9px] md:text-[10px] font-bold">
-                      {s.full_name.split(' ').map((n: string) => n[0]).join('')}
+                      {(s.full_name || 'Staff Member').split(' ').map((n: string) => n[0]).join('')}
                     </AvatarFallback>
                   </Avatar>
                 ))}
@@ -186,11 +188,15 @@ export default function DispatchPage() {
         {/* ── Main View Content ── */}
         <div className="flex flex-1 min-h-0 overflow-hidden relative">
           <div className="flex-1 min-w-0 overflow-auto bg-off-white/20">
-            {activeTab === 'map'       && <DispatchMap onNewJob={() => setBookDialogOpen(true)} />}
-            {activeTab === 'tasks'     && <TasksView onJobClick={handleJobDoubleClick} />}
-            {activeTab === 'calendar'  && <CalendarView onJobClick={handleJobDoubleClick} />}
-            {activeTab === 'schedules' && <StaffScheduleView onJobClick={handleJobDoubleClick} onScheduleUpdate={revalidateJobs} />}
-            {activeTab === 'queues'    && <QueuesView onJobClick={handleJobDoubleClick} />}
+            <ErrorBoundary>
+              <SafeMount fallback={<div className="p-20 text-center"><Loader2 className="w-8 h-8 text-primary animate-spin mx-auto" /></div>}>
+                {activeTab === 'map'       && <DispatchMap onNewJob={() => setBookDialogOpen(true)} />}
+                {activeTab === 'tasks'     && <TasksView onJobClick={handleJobDoubleClick} />}
+                {activeTab === 'calendar'  && <CalendarView onJobClick={handleJobDoubleClick} />}
+                {activeTab === 'schedules' && <StaffScheduleView onJobClick={handleJobDoubleClick} onScheduleUpdate={revalidateJobs} />}
+                {activeTab === 'queues'    && <QueuesView onJobClick={handleJobDoubleClick} />}
+              </SafeMount>
+            </ErrorBoundary>
           </div>
 
           {/* Jobs Panel (Desktop Only) */}
