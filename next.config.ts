@@ -22,6 +22,9 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
 
+  // Standalone output for Netlify/Vercel optimization
+  output: 'standalone',
+
   // Tree-shake heavy icon/animation libraries
   experimental: {
     optimizePackageImports: ['lucide-react', 'framer-motion'],
